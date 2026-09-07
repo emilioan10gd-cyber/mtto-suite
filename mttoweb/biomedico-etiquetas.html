@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biomédico · Etiquetas</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f4f5f7;
+      color: #1f2430;
+    }
+    .barra {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 12px 20px;
+      background: #1f2430; color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+    .barra h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .barra .cuenta { font-size: 13px; opacity: .8; }
+    .barra .crece { flex: 1; }
+    .barra input, .barra select {
+      border: 1px solid #454b5a; border-radius: 4px; padding: 6px 8px;
+      background: #2b3040; color: #fff; font-size: 13px;
+    }
+    .barra button {
+      border: 0; border-radius: 4px; padding: 7px 16px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: #2a78d6; color: #fff;
+    }
+    .barra button.secundario { background: #454b5a; }
+    .barra button:hover { filter: brightness(1.1); }
+
+    .aviso { padding: 20px; font-size: 14px; }
+    .aviso.error { color: #c0392b; }
+
+    .hoja {
+      width: 8.5in;
+      margin: 16px auto;
+      padding: 0.4in 0.3in;
+      background: #fff;
+      box-shadow: 0 1px 6px rgba(0,0,0,.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.12in;
+      align-content: start;
+    }
+
+    .etiqueta {
+      border: 1px dashed #c8ccd4;
+      border-radius: 3px;
+      padding: 6px 4px 4px;
+      text-align: center;
+      height: 1.6in;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .etiqueta .nombre {
+      font-size: 8.5px; line-height: 1.15;
+      max-height: 2.3em; overflow: hidden;
+      margin-bottom: 3px; color: #333; font-weight: 600;
+    }
+    .etiqueta .area {
+      font-size: 7.5px; color: #666; margin-top: 2px;
+    }
+    .etiqueta svg { display: block; }
+
+    @media print {
+      body { background: #fff; }
+      .barra, .aviso { display: none !important; }
+      .hoja {
+        width: auto; margin: 0; box-shadow: none;
+        padding: 0.25in;
+      }
+      .etiqueta { border-color: #e6e8ec; }
+      @page { size: letter portrait; margin: 0.3in; }
+    }
+  </style>
+</head>
+<body>
+  <div class="barra">
+    <h1>Etiquetas — Biomédico</h1>
+    <select id="fFormato">
+      <option value="qr">Código QR</option>
+      <option value="barra">Código de barras</option>
+    </select>
+    <input type="text" id="fBusqueda" placeholder="Buscar equipo...">
+    <select id="fArea"><option value="">Todas las áreas</option></select>
+    <span class="cuenta" id="cuenta"></span>
+    <span class="crece"></span>
+    <button type="button" id="btnRecargar" class="secundario">Actualizar</button>
+    <button type="button" id="btnImprimir">Imprimir</button>
+    <button type="button" class="secundario" id="btnCerrar">Cerrar</button>
+  </div>
+
+  <div class="aviso" id="aviso">Cargando equipos…</div>
+  <div class="hoja" id="hoja"></div>
+
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="vendors/qrcode/qrcode.min.js"></script>
+  <script src="js/mtto-barcode.js"></script>
+  <script>
+  (function () {
+    function escapa(t) {
+      const d = document.createElement("div");
+      d.textContent = t ?? "";
+      return d.innerHTML;
+    }
+
+    function urlEquipo(id) {
+      return location.origin + location.pathname.replace(/[^/]*$/, "") + "biomedico-equipo.html?id=" + id;
+    }
+
+    // Mismo formato que usa biomedico-escanear.html para volver a sacar el id.
+    function codigoBarraEquipo(id) {
+      return "BIO-" + String(id).padStart(6, "0");
+    }
+
+    function svgQr(texto) {
+      const qr = qrcode(0, "M");
+      qr.addData(texto);
+      qr.make();
+      return qr.createSvgTag({ cellSize: 3, margin: 2 });
+    }
+
+    function svgBarra(texto) {
+      return MttoBarcode.svg(texto, { moduloPx: 1.4, altoPx: 40, margenPx: 6 });
+    }
+
+    async function obtenerEquipos() {
+      const qp = new URLSearchParams(location.search);
+      const id = qp.get("id");
+      if (id) {
+        const equipo = await BiomedicoApi.equipos.obtener(parseInt(id, 10));
+        return [equipo];
+      }
+
+      const params = { tamano: 500 };
+      const q = document.getElementById("fBusqueda").value.trim();
+      const area = document.getElementById("fArea").value;
+      if (q) params.q = q;
+      if (area) params.area = area;
+
+      const pagina = await BiomedicoApi.equipos.listar(params);
+      return pagina.datos;
+    }
+
+    async function cargarAreas() {
+      const catalogos = await BiomedicoApi.catalogos.todos();
+      document.getElementById("fArea").innerHTML = '<option value="">Todas las áreas</option>' +
+        catalogos.areas.map(a => `<option value="${escapa(a.nombre)}">${escapa(a.nombre)}</option>`).join("");
+    }
+
+    let equiposActuales = [];
+
+    function renderizar() {
+      const hoja = document.getElementById("hoja");
+      const formato = document.getElementById("fFormato").value;
+      hoja.innerHTML = equiposActuales.map(e => `
+        <div class="etiqueta">
+          <div class="nombre">${escapa(e.nombre)}</div>
+          ${formato === "barra" ? svgBarra(codigoBarraEquipo(e.id)) : svgQr(urlEquipo(e.id))}
+          <div class="area">${escapa(e.area)}${e.numeroSerie ? " · " + escapa(e.numeroSerie) : ""}</div>
+        </div>`).join("");
+    }
+
+    async function iniciar() {
+      const aviso = document.getElementById("aviso");
+      const hoja = document.getElementById("hoja");
+      try {
+        equiposActuales = await obtenerEquipos();
+        if (!equiposActuales.length) {
+          aviso.textContent = "No hay equipos que coincidan con el filtro.";
+          hoja.innerHTML = "";
+          return;
+        }
+
+        renderizar();
+
+        aviso.style.display = "none";
+        document.getElementById("cuenta").textContent =
+          equiposActuales.length + (equiposActuales.length === 1 ? " etiqueta" : " etiquetas");
+      } catch (err) {
+        aviso.className = "aviso error";
+        aviso.style.display = "";
+        aviso.textContent = "No se pudieron cargar los equipos: " + err.message;
+      }
+    }
+
+    document.getElementById("btnImprimir").addEventListener("click", () => window.print());
+    document.getElementById("btnRecargar").addEventListener("click", iniciar);
+    // Cambiar de QR a barras (o viceversa) solo redibuja: los equipos ya
+    // están en memoria, no hace falta volver a pedirlos a la API.
+    document.getElementById("fFormato").addEventListener("change", () => {
+      if (equiposActuales.length) renderizar();
+    });
+
+    // window.close() solo funciona si la pestaña se abrió por script
+    // (window.open()); si se llegó por un link normal del sidebar o del
+    // expediente del equipo, el navegador la ignora en silencio. En ese
+    // caso, regresar es lo útil: al historial si lo hay, si no a Equipos.
+    document.getElementById("btnCerrar").addEventListener("click", () => {
+      window.close();
+      setTimeout(() => {
+        if (history.length > 1) history.back();
+        else location.href = "biomedico-equipos.html";
+      }, 150);
+    });
+
+    (async () => {
+      await cargarAreas();
+      await iniciar();
+    })();
+  })();
+  </script>
+</body>
+</html>

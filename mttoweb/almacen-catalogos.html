@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Catálogos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <div id="sidebarInyectado"></div>
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0 font-weight-bold">Catálogo de artículos</h3>
+            <button class="btn btn-primary" id="btnNuevo">+ Nuevo artículo</button>
+          </div>
+
+          <!-- Alerta global -->
+          <div id="alertaGlobal" class="d-none mb-2"></div>
+
+          <!-- Filtros -->
+          <div class="card mb-3">
+            <div class="card-body py-2">
+              <div class="form-row">
+                <div class="col-md-6">
+                  <input type="search" class="form-control form-control-sm" id="filtroQ" placeholder="Buscar clave o nombre...">
+                </div>
+                <div class="col-md-3">
+                  <select class="form-control form-control-sm" id="filtroNivel">
+                    <option value="">Todos los niveles</option>
+                    <option value="Sin stock">Sin stock</option>
+                    <option value="Bajo minimo">Bajo mínimo</option>
+                    <option value="Normal">Normal</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <button class="btn btn-secondary btn-sm btn-block" id="btnBuscar">Buscar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Clave SSA</th>
+                      <th>Artículo</th>
+                      <th>Unidad</th>
+                      <th class="text-right">Stock</th>
+                      <th class="text-right">Mínimo</th>
+                      <th class="text-right">Máximo</th>
+                      <th>Programa</th>
+                      <th>CPM</th>
+                      <th>Nivel</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaBody">
+                    <tr><td colspan="10" class="text-center text-muted py-3">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+                <span class="text-muted small" id="infoTotal">—</span>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary mr-1" id="btnAnt">&#8592;</button>
+                  <span class="small mx-2" id="pagInfo">—</span>
+                  <button class="btn btn-sm btn-outline-secondary" id="btnSig">&#8594;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal edición / creación -->
+        <div class="modal fade" id="modalArt" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalTitulo">Artículo</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+              </div>
+              <div class="modal-body">
+                <div id="modalAlerta" class="d-none mb-2"></div>
+                <input type="hidden" id="mId">
+                <div class="form-group">
+                  <label>Clave SSA <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm" id="mClave" placeholder="060.123.4567">
+                </div>
+                <div class="form-group">
+                  <label>Nombre / descripción <span class="text-danger">*</span></label>
+                  <textarea class="form-control form-control-sm" id="mNombre" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label>Unidad de medida <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" id="mUnidad" placeholder="PIEZA, ENVASE...">
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label>Programa</label>
+                    <input type="text" class="form-control form-control-sm" id="mPrograma" placeholder="U013, INSABI...">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-md-4">
+                    <label>Precio unitario</label>
+                    <input type="number" class="form-control form-control-sm" id="mPrecio" step="0.01" min="0">
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label>Stock mínimo</label>
+                    <input type="number" class="form-control form-control-sm" id="mMin" step="1" min="0" value="0">
+                  </div>
+                  <div class="form-group col-md-4">
+                    <label>Stock máximo</label>
+                    <input type="number" class="form-control form-control-sm" id="mMax" step="1" min="0" placeholder="Sin límite">
+                  </div>
+                </div>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="mEsCpm">
+                  <label class="form-check-label" for="mEsCpm">Es CPM (Cuadro Básico)</label>
+                </div>
+                <div class="form-group mt-3">
+                  <label>Fotografía del artículo</label>
+                  <div class="d-flex align-items-start" style="gap:12px">
+                    <div style="flex:1">
+                      <input type="file" class="form-control-file form-control-sm" id="mImagen" accept="image/*">
+                      <small class="text-muted">Foto del empaque o producto (opcional). Se comprime automáticamente.</small>
+                    </div>
+                    <div id="mImagenPreviewWrap" style="display:none;min-width:90px">
+                      <img id="mImagenPreviewImg" style="max-height:80px;max-width:90px;border:1px solid #ddd;border-radius:4px;object-fit:cover;display:block">
+                      <button type="button" class="btn btn-xs btn-outline-danger mt-1 btn-block" id="mBtnQuitarImg">Quitar foto</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer"><span class="text-muted">Almacén Central · HGR Reynosa</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const NIVEL_BADGE = { "Sin stock": "badge-dark", "Bajo minimo": "badge-danger", "Normal": "badge-success", "Sobre maximo": "badge-warning" };
+
+    let imgBase64 = null; // null = no tocar; "" = borrar; "data:..." = nueva imagen
+
+    function comprimirImagen(file, maxW = 900, calidad = 0.78) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const scale = img.width > maxW ? maxW / img.width : 1;
+            const canvas = document.createElement("canvas");
+            canvas.width  = Math.round(img.width  * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", calidad));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function mostrarPreviewImagen(dataUrl) {
+      document.getElementById("mImagenPreviewImg").src = dataUrl;
+      document.getElementById("mImagenPreviewWrap").style.display = "";
+    }
+    function ocultarPreviewImagen() {
+      document.getElementById("mImagenPreviewWrap").style.display = "none";
+      document.getElementById("mImagenPreviewImg").src = "";
+    }
+
+    document.getElementById("mImagen").addEventListener("change", async function () {
+      if (!this.files || !this.files[0]) return;
+      try {
+        imgBase64 = await comprimirImagen(this.files[0]);
+        mostrarPreviewImagen(imgBase64);
+      } catch (e) { alert("No se pudo procesar la imagen."); }
+    });
+
+    document.getElementById("mBtnQuitarImg").addEventListener("click", function () {
+      imgBase64 = "";  // señal para borrar en el servidor
+      ocultarPreviewImagen();
+      document.getElementById("mImagen").value = "";
+    });
+
+    const estado = { pagina: 1, tamano: 60, totalPaginas: 1 };
+
+    function params() {
+      return {
+        q:    document.getElementById("filtroQ").value.trim() || undefined,
+        nivel: document.getElementById("filtroNivel").value || undefined,
+        pagina: estado.pagina, tamano: estado.tamano, soloActivos: true
+      };
+    }
+
+    async function cargar() {
+      document.getElementById("tablaBody").innerHTML = "<tr><td colspan='10' class='text-center text-muted'>Cargando...</td></tr>";
+      try {
+        const data = await AlmacenApi.inventario.listar(params());
+        estado.totalPaginas = data.totalPaginas || 1;
+        document.getElementById("infoTotal").textContent = `${fmt(data.total)} artículos`;
+        document.getElementById("pagInfo").textContent   = `${data.pagina}/${data.totalPaginas}`;
+        document.getElementById("btnAnt").disabled = data.pagina <= 1;
+        document.getElementById("btnSig").disabled = data.pagina >= data.totalPaginas;
+
+        document.getElementById("tablaBody").innerHTML = data.datos && data.datos.length
+          ? data.datos.map(a => `<tr>
+              <td><code>${esc(a.clave)}</code></td>
+              <td title="${esc(a.nombre)}">${esc(a.nombre.substring(0,40))}${a.nombre.length>40?"…":""}</td>
+              <td>${esc(a.unidad)}</td>
+              <td class="text-right font-weight-bold">${fmt(a.stockActual)}</td>
+              <td class="text-right">${fmt(a.stockMinimo)}</td>
+              <td class="text-right">${a.stockMaximo != null ? fmt(a.stockMaximo) : "—"}</td>
+              <td>${esc(a.programa||"")}</td>
+              <td>${a.esCpm ? '<span class="badge badge-info">CPM</span>' : ''}</td>
+              <td><span class="badge ${NIVEL_BADGE[a.nivel]||'badge-secondary'}">${esc(a.nivel)}</span></td>
+              <td>
+                <button class="btn btn-xs btn-outline-primary" onclick="editarArt(${a.id})">Editar</button>
+              </td>
+            </tr>`).join("")
+          : "<tr><td colspan='10' class='text-center text-muted'>Sin resultados</td></tr>";
+      } catch (err) {
+        document.getElementById("tablaBody").innerHTML = `<tr><td colspan='10' class='text-danger'>${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // ── Modal ──────────────────────────────────────────────────────────
+    function abrirModal(art) {
+      imgBase64 = null; // resetear imagen — null significa "no cambiar"
+      document.getElementById("mImagen").value = "";
+      ocultarPreviewImagen();
+
+      document.getElementById("modalTitulo").textContent = art ? "Editar artículo" : "Nuevo artículo";
+      document.getElementById("mId").value       = art ? art.id : "";
+      document.getElementById("mClave").value    = art ? art.clave : "";
+      document.getElementById("mNombre").value   = art ? art.nombre : "";
+      document.getElementById("mUnidad").value   = art ? art.unidad : "";
+      document.getElementById("mPrograma").value = art ? (art.programa||"") : "";
+      document.getElementById("mPrecio").value   = art ? (art.precioUnitario||"") : "";
+      document.getElementById("mMin").value      = art ? art.stockMinimo : 0;
+      document.getElementById("mMax").value      = art && art.stockMaximo != null ? art.stockMaximo : "";
+      document.getElementById("mEsCpm").checked  = art ? art.esCpm : false;
+      document.getElementById("modalAlerta").classList.add("d-none");
+
+      // Si el artículo ya tiene imagen, mostrar previsualización
+      if (art && art.imagenBase64) {
+        mostrarPreviewImagen(art.imagenBase64);
+      }
+      $("#modalArt").modal("show");
+    }
+
+    window.editarArt = async function (id) {
+      try {
+        const art = await AlmacenApi.inventario.obtener(id);
+        abrirModal(art);
+      } catch (err) { alert("Error: " + err.message); }
+    };
+
+    document.getElementById("btnNuevo").addEventListener("click", () => abrirModal(null));
+
+    document.getElementById("btnGuardar").addEventListener("click", async function () {
+      const id  = document.getElementById("mId").value;
+      const dto = {
+        clave:          document.getElementById("mClave").value.trim(),
+        nombre:         document.getElementById("mNombre").value.trim(),
+        unidad:         document.getElementById("mUnidad").value.trim(),
+        programa:       document.getElementById("mPrograma").value.trim() || undefined,
+        precioUnitario: parseFloat(document.getElementById("mPrecio").value) || undefined,
+        stockMinimo:    parseFloat(document.getElementById("mMin").value) || 0,
+        stockMaximo:    document.getElementById("mMax").value !== "" ? parseFloat(document.getElementById("mMax").value) : undefined,
+        esCpm:          document.getElementById("mEsCpm").checked,
+        imagenBase64:   imgBase64  // null = no tocar; "" = borrar; "data:..." = nueva
+      };
+      if (!dto.clave || !dto.nombre || !dto.unidad) {
+        const a = document.getElementById("modalAlerta");
+        a.className = "alert alert-warning"; a.textContent = "Clave, nombre y unidad son obligatorios."; a.classList.remove("d-none");
+        return;
+      }
+      this.disabled = true;
+      try {
+        if (id) await AlmacenApi.inventario.actualizar(parseInt(id), dto);
+        else     await AlmacenApi.inventario.crear(dto);
+        $("#modalArt").modal("hide");
+        cargar();
+      } catch (err) {
+        const a = document.getElementById("modalAlerta");
+        a.className = "alert alert-danger"; a.textContent = err.message; a.classList.remove("d-none");
+      } finally { this.disabled = false; }
+    });
+
+    // ── Controles ──────────────────────────────────────────────────────
+    document.getElementById("btnBuscar").addEventListener("click", () => { estado.pagina = 1; cargar(); });
+    document.getElementById("filtroQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { estado.pagina = 1; cargar(); } });
+    document.getElementById("btnAnt").addEventListener("click", () => { if (estado.pagina > 1) { estado.pagina--; cargar(); } });
+    document.getElementById("btnSig").addEventListener("click", () => { if (estado.pagina < estado.totalPaginas) { estado.pagina++; cargar(); } });
+    document.getElementById("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    Auth.exigirSesion("almacen").then(s => { if (s) cargar(); });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Inventario</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    /* ── Inventario visual improvements ─────────────────────────────── */
+    .alm-clave   { font-family: monospace; font-size:.85rem; white-space:nowrap; color:#5b4fcf; font-weight:600; }
+    .alm-nombre  { font-size:.82rem; line-height:1.3; max-width:340px; }
+    .alm-stock   { font-size:1.05rem; font-weight:700; }
+    .stock-ok    { color:#1ca85c; }
+    .stock-bajo  { color:#e8700a; }
+    .stock-cero  { color:#c0392b; }
+    .stock-sobre { color:#7f5af0; }
+
+    /* Borde izquierdo de fila por nivel */
+    tr.nivel-ok    { border-left:3px solid #1ca85c; }
+    tr.nivel-bajo  { border-left:3px solid #e8700a; }
+    tr.nivel-cero  { border-left:3px solid #c0392b; }
+    tr.nivel-sobre { border-left:3px solid #7f5af0; }
+
+    /* Badges rediseñados */
+    .badge-sin-stock { background:#c0392b; color:#fff; }
+    .badge-bajo      { background:#e8700a; color:#fff; }
+    .badge-normal    { background:#1ca85c; color:#fff; }
+    .badge-sobre     { background:#7f5af0; color:#fff; }
+    /* Caducidad — 5 niveles NOM-241/NOM-059 */
+    .badge-cad-vencido   { background:#7b0000; color:#fff; }            /* baja obligatoria */
+    .badge-cad-critico   { background:#c0392b; color:#fff; }            /* ≤30 días: retiro urgente */
+    .badge-cad-alerta    { background:#e8700a; color:#fff; }            /* 31-90 días: FEFO estricto */
+    .badge-cad-vigilancia{ background:#c8960c; color:#fff; }            /* 91-180 días: NOM-059 */
+    .badge-cad-vigente   { background:#1ca85c; color:#fff; }
+    .badge-cad-sinfecha  { background:#6c757d; color:#fff; }
+    .cad-vencido, .cad-critico {
+      display:inline-block; border-radius:4px; padding:1px 7px; font-weight:700;
+    }
+    .cad-vencido    { background:#7b0000; color:#fff; }
+    .cad-critico    { background:#fdecea; color:#c0392b; border:1px solid #f3c9c4; }
+    .cad-alerta     { color:#e8700a; font-weight:600; }
+    .cad-vigilancia { color:#c8960c; font-weight:600; }
+
+    /* Acciones compactas en una línea */
+    .alm-acciones { white-space:nowrap; }
+    .alm-acciones .btn { padding:2px 7px; font-size:.72rem; }
+
+    /* Barra de filtros más limpia */
+    #filtroQ { border-radius:20px; padding-left:14px; }
+    .alm-filtros-card { border:none; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+
+    /* Chips de acceso rápido: la vista que casi siempre se busca primero
+       (vencidos, bajo mínimo) sin abrir dos selects. */
+    .chip-row { display:flex; flex-wrap:wrap; gap:6px; }
+    .chip {
+      border:1px solid #d7d9e0; background:#f5f6fa; color:#495057;
+      border-radius:999px; padding:.3rem .8rem; font-size:.8rem; font-weight:600;
+      cursor:pointer; transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .chip:hover, .chip:focus-visible { background:#eceffc; border-color:#5b4fcf; color:#5b4fcf; }
+    .chip.active { color:#fff; border-color:transparent; }
+    .chip.active.chip-danger { background:#c0392b; }
+    .chip.active.chip-warn   { background:#e8700a; }
+    .chip.active:not(.chip-danger):not(.chip-warn) { background:#5b4fcf; }
+
+    /* Filas clicables: toda la fila abre el detalle, no solo el botón chico */
+    #tablaBody tr { cursor:pointer; }
+    #tablaBody tr:hover { background:#fafafd; }
+    .alm-acciones { position: relative; z-index: 1; }
+
+    /* Encabezado con pill count */
+    .alm-count-pill { background:#5b4fcf; color:#fff; border-radius:12px; padding:1px 10px; font-size:.8rem; }
+
+    /* Modal tabs */
+    #modalTabs { border-bottom: 1px solid #dee2e6; }
+    #modalTabs .nav-link { color: #555; padding: .45rem 1rem; border:none; border-bottom:2px solid transparent; border-radius:0; }
+    #modalTabs .nav-link.active { color:#5b4fcf; border-bottom-color:#5b4fcf; background:transparent; font-weight:600; }
+    .modal-tab-panel { min-height: 200px; }
+    .modal-xl { max-width: 960px; }
+
+    /* Botones de tipo en el form */
+    .tipo-btn.active   { color:#fff !important; }
+    .tipo-btn[data-tipo="Entrada"].active  { background:#1ca85c !important; border-color:#1ca85c !important; }
+    .tipo-btn[data-tipo="Salida"].active   { background:#c0392b !important; border-color:#c0392b !important; }
+    .tipo-btn[data-tipo="Merma"].active    { background:#e8700a !important; border-color:#e8700a !important; }
+    .tipo-btn[data-tipo="Ajuste"].active   { background:#6c757d !important; border-color:#6c757d !important; }
+    .subtipo-btn.active { color:#fff !important; }
+    .subtipo-btn[data-subtipo="Agregar"].active  { background:#1ca85c !important; border-color:#1ca85c !important; }
+    .subtipo-btn[data-subtipo="Reducir"].active  { background:#c0392b !important; border-color:#c0392b !important; }
+    .subtipo-btn[data-subtipo="Exacto"].active   { background:#6c757d !important; border-color:#6c757d !important; }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <!-- Sidebar -->
+      <div id="sidebarInyectado"></div>
+      <!-- /Sidebar -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <!-- Encabezado -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <h3 class="mb-0 font-weight-bold mr-2">Inventario</h3>
+              <span class="alm-count-pill" id="pillTotal">—</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary" id="btnExportar">
+                <i class="typcn typcn-download mr-1"></i>Exportar
+              </button>
+              <button type="button" class="btn btn-outline-secondary" id="btnExportarClues"
+                      title="Formato oficial de reporte semanal por CLUES, un renglón por lote">
+                <i class="typcn typcn-document-text mr-1"></i>Exportar formato CLUES
+              </button>
+              <a href="almacen-movimientos.html" class="btn btn-primary">
+                <i class="typcn typcn-plus mr-1"></i>Registrar movimiento
+              </a>
+            </div>
+          </div>
+
+          <!-- Accesos rápidos: las vistas que más se consultan, un clic -->
+          <div class="chip-row mb-2" id="chipsRapidos">
+            <button type="button" class="chip active" data-preset="todos">Todos</button>
+            <button type="button" class="chip chip-danger" data-preset="vencidos">🔴 Vencidos</button>
+            <button type="button" class="chip chip-warn" data-preset="critico">🟠 Crítico ≤30 días</button>
+            <button type="button" class="chip chip-warn" data-preset="bajoMinimo">⚠ Bajo mínimo</button>
+            <button type="button" class="chip chip-danger" data-preset="sinStock">Sin stock</button>
+          </div>
+
+          <!-- Filtros -->
+          <div class="card mb-3 alm-filtros-card">
+            <div class="card-body py-2 px-3">
+              <div class="form-row align-items-center mb-2">
+                <div class="col-md-3 mb-1 mb-md-0">
+                  <input type="search" class="form-control form-control-sm" id="filtroQ"
+                    placeholder="&#128269; Clave o nombre...">
+                </div>
+                <div class="col-md-2 mb-1 mb-md-0">
+                  <select class="form-control form-control-sm" id="filtroNivel">
+                    <option value="">Todos los niveles</option>
+                    <option value="Sin stock">Sin stock</option>
+                    <option value="Bajo minimo">Bajo mínimo</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Sobre maximo">Sobre máximo</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-1 mb-md-0">
+                  <select class="form-control form-control-sm" id="filtroPrograma">
+                    <option value="">Todos los programas</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-1 mb-md-0">
+                  <select class="form-control form-control-sm" id="filtroCaducidad">
+                    <option value="">Caducidad: todas</option>
+                    <option value="vencidos">🔴 Vencidos (baja obligatoria)</option>
+                    <option value="critico">🟠 Crítico ≤30 días</option>
+                    <option value="porVencer">🟡 Alerta 31-90 días</option>
+                    <option value="vigilancia">🔵 Vigilancia 91-180 días</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-1 mb-md-0">
+                  <select class="form-control form-control-sm" id="filtroOrden">
+                    <option value="clave">Ordenar: Clave SSA</option>
+                    <option value="nombre">Ordenar: Nombre A→Z</option>
+                    <option value="stockAsc">Stock ↑ (menor primero)</option>
+                    <option value="stockDesc">Stock ↓ (mayor primero)</option>
+                    <option value="caducidad">Caducidad próxima</option>
+                  </select>
+                </div>
+                <div class="col-md-1">
+                  <button class="btn btn-primary btn-sm btn-block" id="btnBuscar">Buscar</button>
+                </div>
+              </div>
+              <div class="form-row align-items-center justify-content-end">
+                <div class="col-auto">
+                  <label class="form-check-label text-nowrap mb-0 small">
+                    <input type="checkbox" id="filtroCpm" class="mr-1">Solo CPM
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-check-label text-nowrap mb-0 small">
+                    <input type="checkbox" id="filtroConExistencia" class="mr-1">Solo con existencia
+                  </label>
+                </div>
+                <div class="col-auto">
+                  <label class="form-check-label text-nowrap mb-0 small">
+                    <input type="checkbox" id="filtroInactivos" class="mr-1">Incluir inactivos
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla principal -->
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Clave SSA</th>
+                      <th>Artículo</th>
+                      <th>Unidad</th>
+                      <th class="text-right">Stock</th>
+                      <th class="text-right">Mínimo</th>
+                      <th class="text-right">Máximo</th>
+                      <th>Lotes</th>
+                      <th>Cad. próxima</th>
+                      <th>Nivel</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaBody">
+                    <tr><td colspan="10" class="text-center text-muted py-3">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+                <span class="text-muted small" id="infoTotal">—</span>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary mr-1" id="btnAnterior">&#8592;</button>
+                  <span id="paginaInfo" class="small mx-2">—</span>
+                  <button class="btn btn-sm btn-outline-secondary" id="btnSiguiente">&#8594;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal: lotes / historial / registrar movimiento -->
+          <div class="modal fade" id="modalLotes" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+              <div class="modal-content">
+                <div class="modal-header py-2">
+                  <div>
+                    <h5 class="modal-title mb-0" id="modalTitulo">—</h5>
+                    <small class="text-muted" id="modalSubtitulo"></small>
+                  </div>
+                  <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <!-- Tabs -->
+                <ul class="nav nav-tabs nav-tabs-line px-3 mb-0 border-bottom" id="modalTabs">
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#" data-tab="lotes">
+                      <i class="typcn typcn-th-list mr-1"></i>Lotes
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="historial">
+                      <i class="typcn typcn-time mr-1"></i>Historial
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="registrar">
+                      <i class="typcn typcn-plus mr-1"></i>Registrar movimiento
+                    </a>
+                  </li>
+                </ul>
+
+                <!-- Panel: Lotes -->
+                <div class="modal-tab-panel" id="panelLotes">
+                  <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                      <thead class="bg-light"><tr><th>Lote</th><th>Caducidad</th><th>Días</th><th class="text-right">Cantidad</th><th>Estado</th><th></th></tr></thead>
+                      <tbody id="modalLotesBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Panel: Historial -->
+                <div class="modal-tab-panel d-none" id="panelHistorial">
+                  <div class="p-2">
+                    <div class="table-responsive">
+                      <table class="table table-sm mb-0">
+                        <thead class="bg-light"><tr><th>Fecha</th><th>Tipo</th><th>Lote</th><th class="text-right">Cantidad</th><th>Área</th><th>Notas</th><th>Foto</th><th>Usuario</th></tr></thead>
+                        <tbody id="modalHistorialBody"></tbody>
+                      </table>
+                    </div>
+                    <div class="text-center mt-2">
+                      <button class="btn btn-sm btn-outline-secondary d-none" id="btnHistorialMas">Ver más</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Panel: Registrar movimiento -->
+                <div class="modal-tab-panel d-none" id="panelRegistrar">
+                  <div class="p-3">
+                    <form id="formMovimiento" autocomplete="off">
+                      <!-- Tipo -->
+                      <div class="form-group">
+                        <label class="font-weight-bold">Tipo de movimiento</label>
+                        <div class="btn-group btn-group-sm d-flex" id="tipoGrupo">
+                          <button type="button" class="btn btn-outline-success  tipo-btn" data-tipo="Entrada">+ Entrada</button>
+                          <button type="button" class="btn btn-outline-danger   tipo-btn" data-tipo="Salida">− Salida</button>
+                          <button type="button" class="btn btn-outline-warning  tipo-btn" data-tipo="Merma">⚠ Merma</button>
+                          <button type="button" class="btn btn-outline-secondary tipo-btn" data-tipo="Ajuste">⚙ Ajuste</button>
+                        </div>
+                      </div>
+
+                      <!-- AjusteSubtipo (solo para Ajuste) -->
+                      <div class="form-group d-none" id="grupoAjusteSubtipo">
+                        <label class="font-weight-bold">¿Qué hace el ajuste?</label>
+                        <div class="btn-group btn-group-sm d-flex" id="ajusteSubtipoGrupo">
+                          <button type="button" class="btn btn-outline-success  subtipo-btn active" data-subtipo="Agregar">+ Agregar al lote</button>
+                          <button type="button" class="btn btn-outline-danger   subtipo-btn" data-subtipo="Reducir">− Reducir del lote</button>
+                          <button type="button" class="btn btn-outline-secondary subtipo-btn" data-subtipo="Exacto">= Ajustar a cantidad exacta</button>
+                        </div>
+                      </div>
+
+                      <div class="form-row">
+                        <!-- Lote -->
+                        <div class="form-group col-md-6">
+                          <label>Lote <span class="text-danger">*</span></label>
+                          <select class="form-control form-control-sm" id="movLote" required></select>
+                          <input type="text" class="form-control form-control-sm mt-1 d-none" id="movLoteNuevo" placeholder="Nombre del nuevo lote">
+                        </div>
+                        <!-- Cantidad -->
+                        <div class="form-group col-md-3">
+                          <label>Cantidad <span class="text-danger">*</span></label>
+                          <input type="number" class="form-control form-control-sm" id="movCantidad" min="0" step="1" required>
+                        </div>
+                        <!-- Caducidad (solo Entrada o lote nuevo) -->
+                        <div class="form-group col-md-3 d-none" id="grupoCaducidad">
+                          <label>Caducidad del lote</label>
+                          <input type="date" class="form-control form-control-sm" id="movCaducidad">
+                        </div>
+                      </div>
+
+                      <div class="form-row">
+                        <!-- Área destino: solo tiene sentido cuando el material SALE a algún
+                             lado (Salida). En Entrada/Merma/Ajuste no hay destino y se oculta,
+                             para no preguntar "¿a dónde se traslada?" en una merma. -->
+                        <div class="form-group col-md-6" id="grupoAreaDestino">
+                          <label id="lblAreaDestino">Área que recibe</label>
+                          <select class="form-control form-control-sm" id="movAreaDestino">
+                            <option value="">— Sin especificar —</option>
+                            <option>CEYE</option>
+                            <option>Farmacia</option>
+                            <option>Urgencias</option>
+                            <option>Hospitalización</option>
+                            <option>Quirófano</option>
+                            <option>Pediatría</option>
+                            <option>Ginecología</option>
+                            <option>Laboratorio</option>
+                            <option>Consulta Externa</option>
+                            <option>Administración</option>
+                          </select>
+                        </div>
+                        <!-- Notas -->
+                        <div class="form-group col-md-6">
+                          <label>Observaciones</label>
+                          <textarea class="form-control form-control-sm" id="movNotas" rows="2" placeholder="Motivo, observación, folio..."></textarea>
+                        </div>
+                      </div>
+
+                      <!-- Imagen (útil en merma) -->
+                      <div class="form-group">
+                        <label>Fotografía <small class="text-muted">(opcional — útil en merma)</small></label>
+                        <div class="d-flex align-items-start" style="gap:10px">
+                          <input type="file" class="form-control-file" id="movImagen" accept="image/*">
+                          <div id="movImagenPreview" style="display:none">
+                            <img id="movImagenImg" style="max-height:80px;max-width:120px;border:1px solid #ddd;border-radius:4px;object-fit:cover">
+                            <button type="button" class="btn btn-xs btn-outline-danger d-block mt-1" id="btnQuitarImagen">Quitar</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Alerta de error -->
+                      <div class="alert alert-danger py-2 d-none" id="movError"></div>
+                      <div class="alert alert-success py-2 d-none" id="movOk"></div>
+
+                      <div class="d-flex justify-content-end" style="gap:8px">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="btnGuardarMov">
+                          <i class="typcn typcn-tick mr-1"></i>Guardar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content-wrapper -->
+        <footer class="footer">
+          <span class="text-muted text-sm-left">Almacén Central · HGR Reynosa</span>
+        </footer>
+      </div><!-- /main-panel -->
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    const fmtFecha = (s) => s ? new Date(s).toLocaleDateString("es-MX") : "—";
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const NIVEL_BADGE     = { "Sin stock": "badge-sin-stock", "Bajo minimo": "badge-bajo", "Normal": "badge-normal", "Sobre maximo": "badge-sobre" };
+    const NIVEL_ROW       = { "Sin stock": "nivel-cero", "Bajo minimo": "nivel-bajo", "Normal": "nivel-ok", "Sobre maximo": "nivel-sobre" };
+    const NIVEL_STOCK_CLS = { "Sin stock": "stock-cero", "Bajo minimo": "stock-bajo", "Normal": "stock-ok", "Sobre maximo": "stock-sobre" };
+    // NOM-241-SSA1-2012 / NOM-059-SSA1-2015 — 5 niveles de caducidad
+    const CAD_BADGE = {
+      "Vencido":    "badge-cad-vencido",
+      "Critico":    "badge-cad-critico",
+      "Alerta":     "badge-cad-alerta",
+      "Vigilancia": "badge-cad-vigilancia",
+      "Vigente":    "badge-cad-vigente",
+      "Sin fecha":  "badge-cad-sinfecha"
+    };
+    const CAD_LABEL = {
+      "Vencido":    "Vencido — baja obligatoria",
+      "Critico":    "Crítico ≤30 días",
+      "Alerta":     "Alerta 31-90 días",
+      "Vigilancia": "Vigilancia 91-180 días",
+      "Vigente":    "Vigente",
+      "Sin fecha":  "Sin fecha"
+    };
+    const CAD_CLS = {
+      "Vencido":    "cad-vencido",
+      "Critico":    "cad-critico",
+      "Alerta":     "cad-alerta",
+      "Vigilancia": "cad-vigilancia"
+    };
+
+    // El DTO de la tabla principal (AlmArticuloDto) trae la fecha de
+    // caducidad más próxima pero no el estado ya clasificado (eso solo lo
+    // manda AlmLoteDto, para el modal de lotes). Se calcula aquí con los
+    // mismos umbrales NOM-241-SSA1-2012 / NOM-059-SSA1-2015 que usa el
+    // backend, para no depender de recompilar y redesplegar la API.
+    function estadoCaducidadDesdeFecha(fechaIso) {
+      if (!fechaIso) return "Sin fecha";
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const fecha = new Date(fechaIso); fecha.setHours(0, 0, 0, 0);
+      const dias = Math.round((fecha - hoy) / 86400000);
+      if (dias < 0) return "Vencido";
+      if (dias <= 30) return "Critico";
+      if (dias <= 90) return "Alerta";
+      if (dias <= 180) return "Vigilancia";
+      return "Vigente";
+    }
+
+    const estado = { pagina: 1, tamano: 60, totalPaginas: 1 };
+
+    function params() {
+      const inactivos = document.getElementById("filtroInactivos").checked;
+      return {
+        q:                document.getElementById("filtroQ").value.trim() || undefined,
+        nivel:            document.getElementById("filtroNivel").value || undefined,
+        programa:         document.getElementById("filtroPrograma").value || undefined,
+        caducidad:        document.getElementById("filtroCaducidad").value || undefined,
+        soloCpm:          document.getElementById("filtroCpm").checked || undefined,
+        soloConExistencia:document.getElementById("filtroConExistencia").checked || undefined,
+        soloActivos:      !inactivos,
+        ordenarPor:       document.getElementById("filtroOrden").value || undefined,
+        pagina:           estado.pagina,
+        tamano:           estado.tamano
+      };
+    }
+
+    async function cargar() {
+      document.getElementById("tablaBody").innerHTML = "<tr><td colspan='10' class='text-center text-muted'>Cargando...</td></tr>";
+      try {
+        const data = await AlmacenApi.inventario.listar(params());
+        estado.totalPaginas = data.totalPaginas || 1;
+        document.getElementById("pillTotal").textContent = fmt(data.total);
+        document.getElementById("infoTotal").textContent = `${fmt(data.total)} artículos · página ${data.pagina} de ${data.totalPaginas}`;
+        document.getElementById("paginaInfo").textContent = `${data.pagina} / ${data.totalPaginas}`;
+        document.getElementById("btnAnterior").disabled = data.pagina <= 1;
+        document.getElementById("btnSiguiente").disabled = data.pagina >= data.totalPaginas;
+
+        if (!data.datos || !data.datos.length) {
+          document.getElementById("tablaBody").innerHTML = "<tr><td colspan='10' class='text-center text-muted py-3'>Sin resultados</td></tr>";
+          return;
+        }
+        document.getElementById("tablaBody").innerHTML = data.datos.map(a => {
+          const rowCls  = NIVEL_ROW[a.nivel]       || "";
+          const stoCls  = NIVEL_STOCK_CLS[a.nivel] || "";
+          const badgeCls= NIVEL_BADGE[a.nivel]     || "badge-secondary";
+          const estadoCad = a.estadoCaducidad || estadoCaducidadDesdeFecha(a.caducidadProxima);
+          const cadCls  = CAD_CLS[estadoCad] || "";
+          const cadTxt  = a.caducidadProxima
+            ? `<span class="${cadCls}" title="${esc(CAD_LABEL[estadoCad] || estadoCad)}">${fmtFecha(a.caducidadProxima)}</span>`
+            : '<span class="text-muted">—</span>';
+          const esCpm   = a.esCpm ? '<span class="badge badge-info ml-1" title="Cuadro Básico">CPM</span>' : "";
+          return `<tr class="${rowCls}" data-id="${a.id}" data-clave="${esc(a.clave)}" data-nombre="${esc(a.nombre)}" data-unidad="${esc(a.unidad)}" tabindex="0">
+            <td class="alm-clave">${esc(a.clave)}</td>
+            <td><div class="alm-nombre" title="${esc(a.nombre)}">${esc(a.nombre)}${esCpm}</div></td>
+            <td class="text-nowrap text-muted small">${esc(a.unidad)}</td>
+            <td class="text-right alm-stock ${stoCls}">${fmt(a.stockActual)}</td>
+            <td class="text-right text-muted small">${fmt(a.stockMinimo)}</td>
+            <td class="text-right text-muted small">${a.stockMaximo != null ? fmt(a.stockMaximo) : "—"}</td>
+            <td class="text-center">${fmt(a.lotesConExistencia)}</td>
+            <td>${cadTxt}</td>
+            <td><span class="badge ${badgeCls}">${esc(a.nivel)}</span></td>
+            <td class="alm-acciones">
+              <button class="btn btn-xs btn-outline-primary" onclick="event.stopPropagation(); verLotes(${a.id}, '${esc(a.clave)}', '${esc(a.nombre).replace(/'/g,"\\'")}', '${esc(a.unidad)}')"><i class="typcn typcn-th-list"></i> Lotes</button>
+              <a class="btn btn-xs btn-outline-secondary ml-1" href="almacen-etiquetas.html?id=${a.id}" onclick="event.stopPropagation()"><i class="typcn typcn-tags"></i> QR</a>
+            </td>
+          </tr>`;
+        }).join("");
+      } catch (err) {
+        document.getElementById("tablaBody").innerHTML = `<tr><td colspan='10' class='text-center text-danger'>${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // ── Modal: estado ──────────────────────────────────────────────────
+    const modalCtx = { articuloId: null, clave: null, nombre: null, lotes: [], histPagina: 1, imagenBase64: null };
+
+    // Compresión de imagen en cliente (canvas)
+    function comprimirImagen(file, maxW = 900, calidad = 0.78) {
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const ratio = Math.min(1, maxW / img.width);
+            const canvas = document.createElement("canvas");
+            canvas.width  = Math.round(img.width  * ratio);
+            canvas.height = Math.round(img.height * ratio);
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", calidad));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Selector de tab
+    function activarTab(tab) {
+      document.querySelectorAll("#modalTabs .nav-link").forEach(a => a.classList.toggle("active", a.dataset.tab === tab));
+      document.querySelectorAll(".modal-tab-panel").forEach(p => p.classList.add("d-none"));
+      const panelMap = { lotes: "panelLotes", historial: "panelHistorial", registrar: "panelRegistrar" };
+      document.getElementById(panelMap[tab]).classList.remove("d-none");
+      if (tab === "historial") cargarHistorial(1);
+    }
+    document.querySelectorAll("#modalTabs .nav-link").forEach(a => {
+      a.addEventListener("click", e => { e.preventDefault(); activarTab(a.dataset.tab); });
+    });
+
+    // ── Lotes ─────────────────────────────────────────────────────────
+    async function cargarLotes() {
+      document.getElementById("modalLotesBody").innerHTML = "<tr><td colspan='6' class='text-muted'>Cargando...</td></tr>";
+      try {
+        modalCtx.lotes = await AlmacenApi.lotes.porArticulo(modalCtx.articuloId);
+        renderizarLotes();
+        poblarSelectLotes();
+      } catch (err) {
+        document.getElementById("modalLotesBody").innerHTML = `<tr><td colspan='6' class='text-danger'>${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderizarLotes() {
+      const lotes = modalCtx.lotes;
+      document.getElementById("modalLotesBody").innerHTML = lotes.length
+        ? lotes.map(l => {
+            const cadBadge = CAD_BADGE[l.estadoCaducidad] || "badge-secondary";
+            const cadCls2  = CAD_CLS[l.estadoCaducidad]  || "";
+            const fechaTxt = l.caducidad
+              ? `<span class="${cadCls2}">${fmtFecha(l.caducidad)}</span>`
+              : '<span class="text-muted">—</span>';
+            return `<tr>
+              <td class="alm-clave">${esc(l.lote)}</td>
+              <td>${fechaTxt}</td>
+              <td class="${cadCls2}">${l.diasParaCaducar != null ? l.diasParaCaducar + " d" : "—"}</td>
+              <td class="text-right font-weight-bold">${fmt(l.cantidad)}</td>
+              <td><span class="badge ${cadBadge}" title="NOM-241/NOM-059">${esc(CAD_LABEL[l.estadoCaducidad] || l.estadoCaducidad)}</span></td>
+              <td class="alm-acciones">
+                <button class="btn btn-xs btn-primary" onclick="moverLote('${esc(l.lote)}')">
+                  <i class="typcn typcn-arrow-repeat"></i> Mover
+                </button>
+              </td>
+            </tr>`;
+          }).join("")
+        : "<tr><td colspan='6' class='text-center text-muted py-3'>Sin lotes registrados</td></tr>";
+    }
+
+    window.moverLote = function (lote) {
+      activarTab("registrar");
+      const sel = document.getElementById("movLote");
+      if (sel) { sel.value = lote; }
+    };
+
+    // ── Historial ──────────────────────────────────────────────────────
+    const TIPO_COLOR = { "Entrada": "badge-success", "Salida": "badge-danger", "Merma": "badge-warning", "Ajuste": "badge-secondary" };
+    const TIPO_SIGNO = { "Entrada": "+", "Salida": "−", "Merma": "−", "Ajuste": "≈" };
+
+    async function cargarHistorial(pag) {
+      modalCtx.histPagina = pag;
+      document.getElementById("modalHistorialBody").innerHTML = `<tr><td colspan='8' class='text-muted'>Cargando...</td></tr>`;
+      try {
+        const data = await AlmacenApi.movimientos.listar({ articuloId: modalCtx.articuloId, pagina: pag, tamano: 30 });
+        const rows = data.datos || [];
+        document.getElementById("modalHistorialBody").innerHTML = rows.length
+          ? rows.map(m => {
+              const bc    = TIPO_COLOR[m.tipo] || "badge-secondary";
+              const signo = TIPO_SIGNO[m.tipo] || "";
+              const subLbl = m.tipo === "Ajuste" && m.ajusteSubtipo ? ` (${m.ajusteSubtipo})` : "";
+              const foto  = m.imagenBase64
+                ? `<img src="${m.imagenBase64}" style="height:36px;width:48px;object-fit:cover;border-radius:3px;cursor:pointer"
+                       onclick="ampliarFoto('${esc(m.imagenBase64)}')">`
+                : "—";
+              return `<tr>
+                <td class="text-nowrap small">${fmtFecha(m.fecha)}</td>
+                <td><span class="badge ${bc}">${esc(m.tipo)}</span>${subLbl ? `<br><small class="text-muted">${subLbl}</small>` : ""}</td>
+                <td class="alm-clave small">${esc(m.lote)}</td>
+                <td class="text-right font-weight-bold">${signo}${fmt(m.cantidad)}</td>
+                <td class="small">${esc(m.areaDestino || "—")}</td>
+                <td class="small" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(m.notas || "")}">${esc(m.notas || "—")}</td>
+                <td>${foto}</td>
+                <td class="small text-muted">${esc(m.usuario || "")}</td>
+              </tr>`;
+            }).join("")
+          : "<tr><td colspan='8' class='text-center text-muted py-3'>Sin movimientos registrados</td></tr>";
+
+        const btnMas = document.getElementById("btnHistorialMas");
+        if (data.totalPaginas > pag) {
+          btnMas.classList.remove("d-none");
+          btnMas.onclick = () => cargarHistorial(pag + 1);
+        } else {
+          btnMas.classList.add("d-none");
+        }
+      } catch (err) {
+        document.getElementById("modalHistorialBody").innerHTML = `<tr><td colspan='8' class='text-danger'>${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // Ampliar foto en ventana nueva
+    window.ampliarFoto = function (dataUrl) {
+      const w = window.open("", "_blank", "width=800,height=600");
+      w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh">
+        <img src="${dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain"></body></html>`);
+    };
+
+    // ── Registrar movimiento ───────────────────────────────────────────
+    let tipoActual     = null;
+    let subtipoActual  = "Agregar";
+
+    function poblarSelectLotes() {
+      const sel = document.getElementById("movLote");
+      // Se muestra la caducidad de cada lote aquí también: aunque dentro de
+      // un mismo artículo el lote ya es único, sin la fecha a la vista es
+      // fácil elegir el que no toca por FEFO sin darse cuenta.
+      sel.innerHTML = modalCtx.lotes.length
+        ? modalCtx.lotes.map(l => `<option value="${esc(l.lote)}">${esc(l.lote)} · vence ${fmtFecha(l.caducidad)} (${fmt(l.cantidad)} ${esc(modalCtx.unidad || "")})</option>`).join("")
+        : "";
+      // Opción para lote nuevo (solo Entrada)
+      sel.innerHTML += `<option value="__nuevo__">+ Nuevo lote...</option>`;
+    }
+
+    // Botones de tipo
+    document.querySelectorAll(".tipo-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        tipoActual = btn.dataset.tipo;
+        document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const esAjuste = tipoActual === "Ajuste";
+        document.getElementById("grupoAjusteSubtipo").classList.toggle("d-none", !esAjuste);
+        // Caducidad visible solo en Entrada
+        document.getElementById("grupoCaducidad").classList.toggle("d-none", tipoActual !== "Entrada");
+        // Área destino: solo aplica cuando el material sale a otra área
+        // (Salida). Entrada/Merma/Ajuste no van "a ningún lado", así que
+        // preguntar el destino ahí solo confunde (p.ej. una merma nunca se
+        // traslada, se da de baja).
+        const esSalida = tipoActual === "Salida";
+        document.getElementById("grupoAreaDestino").classList.toggle("d-none", !esSalida);
+        if (!esSalida) document.getElementById("movAreaDestino").value = ""; // no se manda a medias si estaba oculto
+        // Lote nuevo solo en Entrada
+        const sel = document.getElementById("movLote");
+        if (tipoActual !== "Entrada") {
+          // Eliminar la opción "Nuevo lote" para no-entrada
+          Array.from(sel.options).forEach(o => { if (o.value === "__nuevo__") o.remove(); });
+          document.getElementById("movLoteNuevo").classList.add("d-none");
+        } else if (!Array.from(sel.options).some(o => o.value === "__nuevo__")) {
+          sel.innerHTML += `<option value="__nuevo__">+ Nuevo lote...</option>`;
+        }
+      });
+    });
+
+    // Botones de subtipo
+    document.querySelectorAll(".subtipo-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        subtipoActual = btn.dataset.subtipo;
+        document.querySelectorAll(".subtipo-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    // Lote nuevo
+    document.getElementById("movLote").addEventListener("change", function () {
+      const esNuevo = this.value === "__nuevo__";
+      document.getElementById("movLoteNuevo").classList.toggle("d-none", !esNuevo);
+      document.getElementById("grupoCaducidad").classList.toggle("d-none", !esNuevo && tipoActual !== "Entrada");
+    });
+
+    // Imagen
+    document.getElementById("movImagen").addEventListener("change", async function () {
+      if (!this.files.length) return;
+      const dataUrl = await comprimirImagen(this.files[0]);
+      modalCtx.imagenBase64 = dataUrl;
+      document.getElementById("movImagenImg").src = dataUrl;
+      document.getElementById("movImagenPreview").style.display = "block";
+    });
+    document.getElementById("btnQuitarImagen").addEventListener("click", () => {
+      modalCtx.imagenBase64 = null;
+      document.getElementById("movImagen").value = "";
+      document.getElementById("movImagenPreview").style.display = "none";
+    });
+
+    // Submit
+    document.getElementById("formMovimiento").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const errDiv = document.getElementById("movError");
+      const okDiv  = document.getElementById("movOk");
+      errDiv.classList.add("d-none");
+      okDiv.classList.add("d-none");
+
+      if (!tipoActual) { errDiv.textContent = "Selecciona el tipo de movimiento."; errDiv.classList.remove("d-none"); return; }
+
+      const loteVal = document.getElementById("movLote").value;
+      const loteKey = loteVal === "__nuevo__"
+        ? document.getElementById("movLoteNuevo").value.trim()
+        : loteVal;
+      if (!loteKey) { errDiv.textContent = "Indica el lote."; errDiv.classList.remove("d-none"); return; }
+
+      const cantidad = parseFloat(document.getElementById("movCantidad").value) || 0;
+      if (tipoActual !== "Ajuste" && cantidad <= 0) {
+        errDiv.textContent = "La cantidad debe ser mayor que cero.";
+        errDiv.classList.remove("d-none"); return;
+      }
+      if (tipoActual === "Ajuste" && subtipoActual !== "Exacto" && cantidad <= 0) {
+        errDiv.textContent = "La cantidad debe ser mayor que cero.";
+        errDiv.classList.remove("d-none"); return;
+      }
+
+      const caducidad = document.getElementById("movCaducidad").value || undefined;
+
+      const btnGuardar = document.getElementById("btnGuardarMov");
+      btnGuardar.disabled = true; btnGuardar.textContent = "Guardando...";
+      try {
+        await AlmacenApi.movimientos.registrar({
+          tipo:           tipoActual,
+          ajusteSubtipo:  tipoActual === "Ajuste" ? subtipoActual : undefined,
+          claveArticulo:  modalCtx.clave,
+          lote:           loteKey,
+          caducidad:      caducidad,
+          cantidad:       cantidad,
+          areaDestino:    document.getElementById("movAreaDestino").value || undefined,
+          notas:          document.getElementById("movNotas").value.trim() || undefined,
+          imagenBase64:   modalCtx.imagenBase64 || undefined
+        });
+        okDiv.textContent = "Movimiento registrado correctamente.";
+        okDiv.classList.remove("d-none");
+        // Refrescar lotes y volver a la pestaña
+        await cargarLotes();
+        cargar();            // actualizar tabla principal
+        setTimeout(() => activarTab("lotes"), 1200);
+        this.reset();
+        tipoActual = null;
+        modalCtx.imagenBase64 = null;
+        document.getElementById("movImagenPreview").style.display = "none";
+        document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById("grupoAjusteSubtipo").classList.add("d-none");
+        document.getElementById("grupoAreaDestino").classList.add("d-none");
+      } catch (err) {
+        errDiv.textContent = err.message;
+        errDiv.classList.remove("d-none");
+      } finally {
+        btnGuardar.disabled = false; btnGuardar.innerHTML = '<i class="typcn typcn-tick mr-1"></i>Guardar';
+      }
+    });
+
+    // ── Abrir modal ────────────────────────────────────────────────────
+    window.verLotes = async function (id, clave, nombre, unidad) {
+      modalCtx.articuloId = id;
+      modalCtx.clave      = clave;
+      modalCtx.nombre     = nombre;
+      modalCtx.unidad     = unidad;
+      modalCtx.lotes      = [];
+      modalCtx.imagenBase64 = null;
+      document.getElementById("modalTitulo").textContent   = clave;
+      document.getElementById("modalSubtitulo").textContent = nombre;
+      document.getElementById("formMovimiento").reset();
+      document.getElementById("movError").classList.add("d-none");
+      document.getElementById("movOk").classList.add("d-none");
+      document.getElementById("movImagenPreview").style.display = "none";
+      document.getElementById("grupoAjusteSubtipo").classList.add("d-none");
+      document.getElementById("grupoAreaDestino").classList.add("d-none");
+      tipoActual = null;
+      document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("active"));
+      activarTab("lotes");
+      $("#modalLotes").modal("show");
+      await cargarLotes();
+    };
+
+    // Exporta TODO lo que cumpla el filtro actual (no solo la página visible),
+    // con el mismo formato que la plantilla Excel del inventario.
+    function exportar() {
+      const params = new URLSearchParams({
+        q:       document.getElementById("filtroQ").value.trim() || undefined,
+        nivel:   document.getElementById("filtroNivel").value || undefined,
+        programa:document.getElementById("filtroPrograma").value || undefined,
+        caducidad: document.getElementById("filtroCaducidad").value || undefined,
+        soloCpm: document.getElementById("filtroCpm").checked || undefined,
+        soloConExistencia: document.getElementById("filtroConExistencia").checked || undefined,
+      });
+      const filtros = {};
+      params.forEach((v, k) => { if (v) filtros[k] = v; });
+      AlmacenApi.inventario.exportar(filtros)
+        .catch(err => alert("No se pudo exportar: " + err.message));
+    }
+
+    document.getElementById("btnBuscar").addEventListener("click", () => { estado.pagina = 1; cargar(); });
+    document.getElementById("filtroQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { estado.pagina = 1; cargar(); } });
+    document.getElementById("filtroOrden").addEventListener("change", () => { estado.pagina = 1; cargar(); });
+
+    // Búsqueda en vivo: no hace falta dar clic en "Buscar" ni presionar Enter
+    // para el caso normal de teclear y esperar; el botón y el Enter se dejan
+    // como respaldo para quien prefiera confirmar a mano.
+    let debounceQ = null;
+    document.getElementById("filtroQ").addEventListener("input", () => {
+      clearTimeout(debounceQ);
+      debounceQ = setTimeout(() => { estado.pagina = 1; cargar(); }, 350);
+    });
+    [document.getElementById("filtroNivel"), document.getElementById("filtroPrograma"),
+     document.getElementById("filtroCpm"), document.getElementById("filtroConExistencia"),
+     document.getElementById("filtroInactivos")].forEach(el =>
+      el.addEventListener("change", () => { estado.pagina = 1; cargar(); }));
+
+    // Fila completa clicable: abre el detalle sin apuntarle al botón chico
+    // "Lotes". Los botones de acción cortan la propagación (event.stopPropagation)
+    // para que "QR" y "Lotes" sigan haciendo lo suyo sin también disparar esto.
+    document.getElementById("tablaBody").addEventListener("click", (e) => {
+      const tr = e.target.closest("tr[data-id]");
+      if (!tr) return;
+      verLotes(+tr.dataset.id, tr.dataset.clave, tr.dataset.nombre, tr.dataset.unidad);
+    });
+    document.getElementById("tablaBody").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const tr = e.target.closest("tr[data-id]");
+      if (!tr) return;
+      e.preventDefault();
+      verLotes(+tr.dataset.id, tr.dataset.clave, tr.dataset.nombre, tr.dataset.unidad);
+    });
+
+    // Chips de acceso rápido: presets de un clic sobre los mismos filtros
+    // que ya existen (nivel / caducidad), sin abrir dos selects.
+    const PRESETS = {
+      todos:      { nivel: "", caducidad: "" },
+      vencidos:   { nivel: "", caducidad: "vencidos" },
+      critico:    { nivel: "", caducidad: "critico" },
+      bajoMinimo: { nivel: "Bajo minimo", caducidad: "" },
+      sinStock:   { nivel: "Sin stock", caducidad: "" }
+    };
+    document.getElementById("chipsRapidos").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-preset]");
+      if (!btn) return;
+      const preset = PRESETS[btn.dataset.preset];
+      document.getElementById("filtroNivel").value = preset.nivel;
+      document.getElementById("filtroCaducidad").value = preset.caducidad;
+      document.querySelectorAll("#chipsRapidos .chip").forEach(c => c.classList.toggle("active", c === btn));
+      estado.pagina = 1;
+      cargar();
+    });
+    document.getElementById("filtroNivel").addEventListener("change", () => {
+      // Si el usuario cambia el nivel a mano, ningún preset queda "seleccionado".
+      document.querySelectorAll("#chipsRapidos .chip").forEach(c => c.classList.remove("active"));
+    });
+    document.getElementById("filtroCaducidad").addEventListener("change", () => {
+      document.querySelectorAll("#chipsRapidos .chip").forEach(c => c.classList.remove("active"));
+      estado.pagina = 1; cargar();
+    });
+    document.getElementById("btnAnterior").addEventListener("click", () => { if (estado.pagina > 1) { estado.pagina--; cargar(); } });
+    document.getElementById("btnSiguiente").addEventListener("click", () => { if (estado.pagina < estado.totalPaginas) { estado.pagina++; cargar(); } });
+    document.getElementById("btnExportar").addEventListener("click", exportar);
+    document.getElementById("btnExportarClues").addEventListener("click", async function () {
+      this.disabled = true;
+      try { await AlmacenApi.inventario.exportarClues(); }
+      catch (err) { alert("No se pudo exportar: " + err.message); }
+      finally { this.disabled = false; }
+    });
+    document.getElementById("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    // Pre-fill from URL params
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get("clave")) document.getElementById("filtroQ").value = urlParams.get("clave");
+    if (urlParams.get("nivel")) document.getElementById("filtroNivel").value = urlParams.get("nivel");
+    if (urlParams.get("caducidad")) document.getElementById("filtroCaducidad").value = urlParams.get("caducidad");
+
+    Auth.exigirSesion("almacen").then(async s => {
+      if (!s) return;
+      // Cargar programas disponibles para el dropdown
+      try {
+        const programas = await AlmacenApi.inventario.programas();
+        const sel = document.getElementById("filtroPrograma");
+        programas.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p; opt.textContent = p;
+          sel.appendChild(opt);
+        });
+      } catch(e) { /* silencioso */ }
+      await cargar();
+
+      // Se llegó desde el dashboard con "¿qué es esto exactamente?": no
+      // basta con dejarlo filtrado, hay que abrir el detalle de una vez
+      // (?clave=X&abrir=1) — así "seleccionar uno" en el dashboard sí
+      // muestra el artículo al toque, sin un clic extra en la tabla.
+      if (urlParams.get("abrir") === "1" && urlParams.get("clave")) {
+        const claveBuscada = urlParams.get("clave");
+        const fila = document.querySelector(`#tablaBody tr[data-clave="${CSS.escape(claveBuscada)}"]`);
+        if (fila) verLotes(+fila.dataset.id, fila.dataset.clave, fila.dataset.nombre, fila.dataset.unidad);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

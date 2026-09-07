@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>MTTO · Dashboard</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Dashboard</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Artículos</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiTotalArticulos">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Bajo mínimo</h4>
+                  <h2 class="font-weight-bold text-danger mb-0" id="kpiBajoMinimo">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Valor de inventario</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiValorTotal">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Movimientos del mes</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiMovimientosMes">—</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráficas: mismas 3 del Dashboard del Excel original -->
+          <div class="row">
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Valor de inventario por categoría</h4>
+                  <canvas id="graficaValorCategoria" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Distribución de artículos por estado</h4>
+                  <canvas id="graficaPorEstado" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Movimientos de inventario — últimos 12 meses</h4>
+                  <canvas id="graficaMovimientosMes" height="100"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Por categoría -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Existencias por categoría</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Categoría</th>
+                          <th>Artículos</th>
+                          <th>Existencias</th>
+                          <th>Bajo mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaCategorias">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bajo stock -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Artículos con menor existencia</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Artículo</th>
+                          <th>Actual</th>
+                          <th>Mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaBajoStock">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script>Auth.exigirSesion("mtto");</script>
+  <script src="js/mtto-api.js"></script>
+  <script src="js/mtto-dashboard.js"></script>
+</body>
+</html>

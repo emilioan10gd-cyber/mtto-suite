@@ -1,0 +1,105 @@
+/* Ajustes propios encima del tema base. */
+
+.mtto-brand {
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: #212529;
+  letter-spacing: 0.5px;
+}
+
+.brand-logo-mini .mtto-brand {
+  font-size: 1.1rem;
+}
+
+/* Posicionar checkbox a la derecha del label */
+.form-check {
+  display: inline-flex;
+  align-items: center;
+  padding-left: 0;
+  white-space: nowrap;
+}
+
+.form-check-input {
+  position: static;
+  margin-left: 0.3rem;
+  margin-right: 0;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.form-check-label {
+  display: inline;
+  margin-left: 0;
+  margin-bottom: 0;
+}
+
+/* Botones de sólo ícono dentro de tablas (quitar de la lista, cancelar
+   movimiento, eliminar fila). El tema base los deja en ~34px; se llevan al
+   mínimo táctil de 44px sin engordar la fila, centrando el glifo. */
+.btn-icono-tabla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-icono-tabla i {
+  font-size: 1.15rem;
+}
+
+/* El tema no marca el cursor en todos los botones. */
+.btn,
+.nav-tabs .nav-link {
+  cursor: pointer;
+}
+
+/* Foco visible para navegación con teclado: el tema lo quita en algunos
+   controles y sin esto no se ve dónde está parado el usuario. */
+.btn:focus-visible,
+.form-control:focus-visible,
+.nav-tabs .nav-link:focus-visible {
+  outline: 2px solid #1f3bb3;
+  outline-offset: 2px;
+}
+
+/* Una fila cancelada se distingue por algo más que el color, para que no
+   dependa sólo de la vista. */
+tr.fila-cancelada td {
+  opacity: 0.7;
+  text-decoration: line-through;
+  text-decoration-color: rgba(220, 53, 69, 0.5);
+}
+
+tr.fila-cancelada td:last-child,
+tr.fila-cancelada td:nth-last-child(2) {
+  text-decoration: none;
+}
+
+/* Destello breve en la fila que se acaba de agregar (captura tipo Excel):
+   es la confirmación visual, no hace falta un mensaje aparte que haya que
+   leer y descartar. */
+tr.fila-registro-nueva td {
+  transition: background-color 1.4s ease;
+}
+
+tr.fila-registro-nueva.fila-resaltada td {
+  background-color: #d4edda;
+}
+
+/* Fila de captura fija (pestaña Terapia de Infusión, usa table-primary de
+   Bootstrap para el tinte): los inputs se quedan blancos encima para que se
+   note claro dónde se escribe. */
+#filaCapturaRegistro input {
+  background-color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Dashboard</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Dashboard — Biomédico</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Equipos activos</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiActivos">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Equipos dados de baja</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiBaja">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Mantenimientos vencidos</h4>
+                <h2 class="font-weight-bold text-danger mb-0" id="kpiVencidos">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Próximos 30 días</h4>
+                <h2 class="font-weight-bold text-warning mb-0" id="kpiProximos">—</h2>
+              </div></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Insumos bajo mínimo</h4>
+                <h2 class="font-weight-bold text-danger mb-0" id="kpiInsumos">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Lotes por vencer</h4>
+                <h2 class="font-weight-bold text-warning mb-0" id="kpiLotes">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Fallas abiertas</h4>
+                <h2 class="font-weight-bold text-danger mb-0" id="kpiFallas">—</h2>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-3">Equipos por área</h4>
+                <canvas id="graficaPorArea" height="220"></canvas>
+              </div></div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-3">Equipos por estado</h4>
+                <canvas id="graficaPorEstado" height="220"></canvas>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-3">Próximos mantenimientos (30 días)</h4>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead><tr><th>Equipo</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr></thead>
+                    <tbody id="tablaMantenimientos"><tr><td colspan="4">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-3">Insumos bajo mínimo</h4>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead><tr><th>Insumo</th><th>Existencia</th><th>Mínimo</th></tr></thead>
+                    <tbody id="tablaInsumos"><tr><td colspan="3">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-dashboard.js?v=1"></script>
+</body>
+</html>

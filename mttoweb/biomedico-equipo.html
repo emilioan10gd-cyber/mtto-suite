@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Expediente del equipo</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">          <div class="row">
+            <div class="col-12">
+              <div class="d-flex flex-wrap justify-content-between align-items-start">
+                <div>
+                  <h3 class="mb-0 font-weight-bold" id="tituloEquipo">Cargando...</h3>
+                  <p class="mb-0 text-muted" id="subtituloEquipo"></p>
+                  <p id="estadoCarga">Cargando datos...</p>
+                </div>
+                <div class="text-right">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="btnEditarDatos"><i class="typcn typcn-edit"></i> Editar datos</button>
+                  <a class="btn btn-outline-secondary btn-sm" id="linkEtiqueta" href="#" target="_blank"><i class="typcn typcn-tags"></i> Imprimir etiqueta</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-lg-8">
+              <div class="card grid-margin"><div class="card-body">
+                <h4 class="card-title">Datos generales</h4>
+                <div class="row" id="datosGenerales">
+                  <div class="col-md-4"><small class="text-muted d-block">Área</small><span id="dgArea">—</span></div>
+                  <div class="col-md-4"><small class="text-muted d-block">Categoría</small><span id="dgCategoria">—</span></div>
+                  <div class="col-md-4"><small class="text-muted d-block">Estado</small><span id="dgEstado">—</span></div>
+                  <div class="col-md-4 mt-2"><small class="text-muted d-block">Marca</small><span id="dgMarca">—</span></div>
+                  <div class="col-md-4 mt-2"><small class="text-muted d-block">Modelo</small><span id="dgModelo">—</span></div>
+                  <div class="col-md-4 mt-2"><small class="text-muted d-block">N.º de serie</small><span id="dgSerie">—</span></div>
+                  <div class="col-md-4 mt-2"><small class="text-muted d-block">Ubicación</small><span id="dgUbicacion">—</span></div>
+                  <div class="col-md-4 mt-2"><small class="text-muted d-block">Fecha de adquisición</small><span id="dgFechaAdq">—</span></div>
+                  <div class="col-12 mt-2"><small class="text-muted d-block">Comentarios</small><span id="dgComentarios">—</span></div>
+                </div>
+              </div></div>
+
+              <div class="card grid-margin"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h4 class="card-title mb-0">Mantenimientos</h4>
+                  <button type="button" class="btn btn-sm btn-primary" id="btnAgregarMtto"><i class="typcn typcn-plus"></i> Programar</button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead><tr><th>Tipo</th><th>Programado</th><th>Realizado</th><th>Estado</th><th>Técnico</th><th></th></tr></thead>
+                    <tbody id="tablaMantenimientos"><tr><td colspan="6">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+
+              <div class="card grid-margin"><div class="card-body">
+                <h4 class="card-title">Historial de fallas y reporte nuevo</h4>
+                <div class="form-group">
+                  <label>Describe el síntoma</label>
+                  <textarea class="form-control" id="fSintoma" rows="2" placeholder="Ej. no enciende, pantalla en blanco, alarma constante..."></textarea>
+                </div>
+                <div id="sugerenciasBox" class="mb-3"></div>
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label>Técnico</label>
+                    <input type="text" class="form-control" id="fTecnico">
+                  </div>
+                  <div class="form-group col-md-6 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary" id="btnReportarFalla">Reportar falla</button>
+                  </div>
+                </div>
+                <hr>
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead><tr><th>Fecha</th><th>Síntoma</th><th>Causa</th><th>Solución</th><th>Estado</th><th></th></tr></thead>
+                    <tbody id="tablaFallas"><tr><td colspan="6">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="card grid-margin"><div class="card-body text-center">
+                <h4 class="card-title">Etiqueta QR</h4>
+                <div id="qrEquipo"></div>
+                <p class="text-muted small mt-2">Al escanearla con la cámara del celular, abre directo este expediente.</p>
+              </div></div>
+
+              <div class="card grid-margin"><div class="card-body">
+                <h4 class="card-title">Manuales</h4>
+                <div class="custom-file mb-3">
+                  <input type="file" class="custom-file-input" id="inputManual" accept=".pdf,.doc,.docx">
+                  <label class="custom-file-label" for="inputManual">Elegir archivo (PDF, DOC)</label>
+                </div>
+                <div id="errorManual" class="alert alert-danger d-none"></div>
+                <ul class="list-group" id="listaManuales"></ul>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalDatos" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Editar datos del equipo</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorDatos"></div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Nombre *</label>
+                      <input type="text" class="form-control" id="eNombre" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Área *</label>
+                      <input type="text" class="form-control" id="eArea" list="listaAreasEdit" required>
+                      <datalist id="listaAreasEdit"></datalist>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-4">
+                      <label>Categoría</label>
+                      <input type="text" class="form-control" id="eCategoria" list="listaCategoriasEdit">
+                      <datalist id="listaCategoriasEdit"></datalist>
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Marca</label>
+                      <input type="text" class="form-control" id="eMarca">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Modelo</label>
+                      <input type="text" class="form-control" id="eModelo">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-4">
+                      <label>N.º de serie</label>
+                      <input type="text" class="form-control" id="eSerie">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Ubicación</label>
+                      <input type="text" class="form-control" id="eUbicacion">
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Fecha de adquisición</label>
+                      <input type="date" class="form-control" id="eFechaAdq">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Comentarios</label>
+                    <textarea class="form-control" id="eComentarios" rows="2"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarDatos">Guardar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalMtto" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Programar mantenimiento</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorMtto"></div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Tipo *</label>
+                      <select class="form-control" id="mTipo">
+                        <option value="Preventivo">Preventivo</option>
+                        <option value="Correctivo">Correctivo</option>
+                      </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Fecha programada *</label>
+                      <input type="date" class="form-control" id="mFecha" required>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Técnico responsable</label>
+                      <input type="text" class="form-control" id="mTecnico">
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Proveedor</label>
+                      <input type="text" class="form-control" id="mProveedor">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Frecuencia (meses, opcional)</label>
+                    <input type="number" class="form-control" id="mFrecuencia" min="1">
+                  </div>
+                  <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea class="form-control" id="mDescripcion" rows="2"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarMtto">Programar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalResolver" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Resolver falla</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorResolver"></div>
+                  <input type="hidden" id="rFallaId">
+                  <div class="form-group">
+                    <label>Causa</label>
+                    <textarea class="form-control" id="rCausa" rows="2"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Solución *</label>
+                    <textarea class="form-control" id="rSolucion" rows="2" required></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarResolver">Guardar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <style>
+            .sugerencia { border-left: 3px solid #2a78d6; background: #f4f7fb; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-size: 13px; }
+            .sugerencia.manual { border-left-color: #eda100; background: #fbf6ea; }
+            .sugerencia .origen { font-weight: 600; font-size: 11px; text-transform: uppercase; color: #898781; }
+          </style>
+
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/qrcode/qrcode.min.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-equipo.js?v=1"></script>
+</body>
+</html>

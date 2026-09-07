@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Salida</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    /* ── Tokens de la página (encima del tema base, sólo para esta vista) ── */
+    :root {
+      --caja-brand:       #5b4fcf;
+      --caja-brand-dark:  #4a3fc0;
+      --caja-brand-tint:  #f4f3fd;
+      --caja-success:     #1ca85c;
+      --caja-success-tint:#eafaf3;
+      --caja-danger:      #c0392b;
+      --caja-danger-tint: #fdecea;
+      --caja-warn:        #e8700a;
+      --caja-ink:         #1f2430;
+      --caja-muted:       #6c757d;
+      --caja-border:      #e3e5ec;
+      --caja-radius:      10px;
+      --caja-radius-sm:   7px;
+      --caja-shadow:      0 2px 10px rgba(31,36,48,.06);
+      --caja-shadow-lg:   0 10px 30px rgba(31,36,48,.14);
+    }
+
+    /* ── Tamaños pensados para una capturista de 40+, acostumbrada a Excel
+       a zoom normal: el cuerpo chico de Bootstrap (11-12px) cuesta de leer
+       muchas horas seguidas. Mismo criterio que Entrada. ─────────────── */
+    body { font-size: 1rem; }
+
+    /* Encabezados de sección: un rótulo pequeño que ordena la tarjeta antes
+       de que el usuario lea el resto ("¿qué es esto?" antes que el detalle). */
+    .seccion-eyebrow {
+      font-size: .92rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+      color: var(--caja-ink); margin-bottom: .35rem; display:flex; align-items:center; gap:6px;
+    }
+    .seccion-eyebrow i { font-size: 1.05rem; color: var(--caja-brand); }
+
+    .card { border: 1px solid var(--caja-border); box-shadow: var(--caja-shadow); border-radius: var(--caja-radius); }
+
+    /* ── Salida: todo grande, legible de un vistazo ──────────────────── */
+    .scan-dock {
+      background: linear-gradient(180deg, var(--caja-brand-tint), #fff 70%);
+      border-radius: var(--caja-radius);
+    }
+    #cajaScan {
+      font-size: 1.35rem; font-family: 'SFMono-Regular', Consolas, monospace; letter-spacing: .5px;
+      padding: .75rem 1rem; border: 2px solid var(--caja-brand); border-radius: var(--caja-radius-sm);
+      background: #fff;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    #cajaScan:focus { box-shadow: 0 0 0 .25rem rgba(91,79,207,.25); }
+    #cajaScan.flash-ok   { border-color: var(--caja-success); box-shadow: 0 0 0 .25rem rgba(28,168,92,.3); }
+    #cajaScan.flash-bad  { border-color: var(--caja-danger); box-shadow: 0 0 0 .25rem rgba(192,57,43,.3); }
+    #btnCamara { border-radius: var(--caja-radius-sm); min-width: 48px; }
+
+    .scan-hint { font-size: .95rem; color: var(--caja-muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .scan-hint kbd { font-size: .85rem; }
+    /* Los atajos quedan ocultos por defecto: la pantalla que más se usa no
+       necesita 4 líneas de texto siempre encima. Un botón chico los revela
+       para quien los quiera repasar, y luego se pueden volver a esconder.
+       Se marcan como "para quien ya domina el sistema" — no son necesarios
+       para operar, así que no hay presión de aprenderlos. */
+    #btnAtajos {
+      font-size: .88rem; color: var(--caja-brand); background:none; border:none; padding:0;
+      text-decoration: underline dotted; cursor:pointer; font-weight:600;
+    }
+    .scan-tricks {
+      font-size: .9rem; color: #6c7480; background:#fff; border:1px dashed var(--caja-border);
+      border-radius: var(--caja-radius-sm); padding: .5rem .7rem; line-height: 1.7;
+    }
+    .scan-tricks kbd {
+      font-size: .82rem; padding: 1px 6px; border-radius: 4px; border:1px solid #d3d5de;
+      background:#f7f7fa; box-shadow: 0 1px 0 #d3d5de; color:#495057; font-weight:600;
+    }
+
+    /* Cantidad visible junto al escaneo: alternativa al truco de texto "5*"
+       para quien no lo conoce o no se siente cómoda escribiéndolo — mismo
+       resultado, sin depender de memorizar un atajo. */
+    #cajaCantidad { width: 72px; font-size: 1.1rem; text-align:center; font-weight:700; }
+
+    /* Tipo de operación: solo Salida/Merma por ahora (Transferencia queda
+       para una fase futura). Merma reduce el formulario a solo Notas. */
+    .tipo-op { display: flex; gap: 8px; }
+    .tipo-op .btn {
+      flex: 1 1 0; min-height: 46px; font-weight: 600; font-size: .9rem;
+      border-width: 2px; border-radius: var(--caja-radius-sm);
+    }
+    .tipo-op .btn[data-tipo="Salida"].active { background: var(--caja-success); border-color: var(--caja-success); color:#fff; }
+    .tipo-op .btn[data-tipo="Merma"].active  { background: var(--caja-danger); border-color: var(--caja-danger); color:#fff; }
+
+    /* Chips (filtro de tipo en "Últimas operaciones") */
+    .chip-row { display:flex; flex-wrap:wrap; gap:6px; margin: 6px 0 2px; }
+    .chip {
+      border: 1px solid var(--caja-border); background:#f5f6fa; color:#495057;
+      border-radius: 999px; padding: .35rem .85rem; font-size: .9rem;
+      font-weight: 600; cursor: pointer; min-height: 34px; line-height:1.1;
+      transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .chip:hover, .chip:focus-visible { background:#eceffc; border-color: var(--caja-brand); color: var(--caja-brand); }
+    .chip.active { background: var(--caja-brand); border-color: var(--caja-brand); color:#fff; }
+
+    /* Historial: encabezado más discreto (metadata, no contenido) */
+    #hTabla thead th {
+      font-size: .85rem; text-transform: uppercase; letter-spacing: .02em;
+      color: var(--caja-ink); border-top: none; font-weight: 700;
+    }
+    #hTabla td { font-size: .95rem; }
+    #hTablaBody tr:hover { background:#fafafd; }
+    #hBuscar { max-width: 220px; border-radius: 999px; padding-left: 12px; font-size: .95rem; }
+
+    /* Carrito */
+    #tablaCarrito thead th {
+      font-size: .85rem; text-transform: uppercase; letter-spacing: .02em;
+      color: var(--caja-ink); border-top: none; font-weight: 700;
+    }
+    #tablaCarrito td { vertical-align: middle; font-size: .95rem; }
+    #tablaCarrito tbody tr:hover { background: #fafafd; }
+    .cart-nombre { font-size: .95rem; line-height: 1.3; max-width: 260px; color: var(--caja-ink); }
+    .cart-clave  { font-family: monospace; font-size: .95rem; color: var(--caja-brand); font-weight:700; }
+    .cant-wrap   { display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+    .btn-step {
+      width: 32px; height: 32px; min-width:32px; padding:0; font-weight:700; font-size:1.1rem;
+      display:inline-flex; align-items:center; justify-content:center; line-height:1;
+      border-radius: 6px;
+    }
+    .cart-cant   { width: 64px; text-align: center; font-weight: 700; font-size: 1rem; padding: .25rem; }
+    .cart-lote   { min-width: 190px; font-size: .78rem; }
+    tr.linea-mala { background: var(--caja-danger-tint) !important; }
+    tr.linea-mala .cart-cant { border-color: var(--caja-danger); color: var(--caja-danger); }
+    tr.linea-nueva { animation: entra .5s ease-out; }
+    @keyframes entra { from { background: var(--caja-success-tint); } to { background:transparent; } }
+
+    /* Lote no-FEFO: avisar sin bloquear */
+    .aviso-fefo { font-size:.85rem; color: var(--caja-warn); font-weight:600; display:block; }
+
+    /* Distinguir "esto es un problema de conexión, no tu culpa" de "revisa
+       lo que capturaste" — mismo estilo de alerta roja para los dos hacía
+       que cualquier error se sintiera como un error propio. */
+    .alert-conexion { background:#fff4e5; border-color:#f5c78e; color:#8a5a00; }
+    .alert-conexion::before { content:"📶 "; }
+    .alert-dato::before { content:"⚠ "; }
+
+    /* Botón Merma: mismo tamaño que Salida pero con más peso visual de
+       advertencia, para que un clic equivocado entre los dos se note antes
+       de confirmar — no es un gasto ni una entrega, es una baja real. */
+    .tipo-op .btn[data-tipo="Merma"] { border-style: dashed; }
+    .tipo-op .btn[data-tipo="Merma"].active { border-style: solid; }
+
+    /* ── Confirmación propia (reemplaza el confirm() feo del navegador) ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: rgba(20,22,30,.45);
+      display: flex; align-items: center; justify-content: center; z-index: 3000;
+    }
+    .confirm-caja {
+      background:#fff; border-radius: var(--caja-radius); box-shadow: var(--caja-shadow-lg);
+      padding: 1.5rem; max-width: 440px; width: 90%;
+    }
+    .confirm-caja h5 { font-weight: 800; margin-bottom: .5rem; }
+    .confirm-caja p { font-size: 1rem; color: var(--caja-ink); margin-bottom: 1.25rem; }
+    .confirm-caja .btn { min-height: 46px; font-size: 1rem; font-weight: 700; }
+
+    /* Totales: banda destacada para que el "cierre" de la operación se sienta
+       como un paso propio, no un botón más entre formularios. */
+    .banda-total {
+      background: var(--caja-brand-tint); border-radius: var(--caja-radius-sm);
+      padding: .85rem 1rem; margin: 0 0 .9rem;
+    }
+    .caja-total { font-size: 2.1rem; font-weight: 800; line-height: 1; color: var(--caja-ink); }
+
+    #btnCobrar {
+      padding: .9rem; font-size: 1.05rem; font-weight: 700; min-height: 54px;
+      border-radius: var(--caja-radius-sm); box-shadow: 0 6px 16px rgba(28,168,92,.25);
+    }
+    #btnCobrar:disabled { box-shadow: none; }
+    /* Sticky solo en escritorio/tablet horizontal: en columna angosta
+       (apilada) "pegarla" arriba tapa contenido en vez de ayudar. */
+    @media (min-width: 992px) { .col-caja-derecha { position: sticky; top: 12px; } }
+
+    #video { width: 100%; border-radius: var(--caja-radius-sm); background:#000; }
+    .carrito-vacio { padding: 3rem 1rem; text-align:center; color:#aeb2ba; }
+    .carrito-vacio i { color: #d5d8e0; }
+
+    .toast-undo {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--caja-ink); color:#fff; padding:.6rem 1.1rem; border-radius: var(--caja-radius-sm);
+      font-size:.85rem; opacity:0; pointer-events:none; transition: all .2s ease; z-index: 2000;
+      box-shadow: var(--caja-shadow-lg);
+    }
+    .toast-undo.show { opacity:1; transform: translateX(-50%) translateY(0); pointer-events:auto; }
+    .toast-undo button { margin-left:10px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      tr.linea-nueva { animation: none; }
+      #cajaScan, .chip, .toast-undo { transition: none; }
+    }
+
+    /* Pantalla angosta (celular o tablet en vertical, de pie con el lector) */
+    @media (max-width: 575.98px) {
+      .caja-total { font-size: 1.7rem; }
+      #cajaScan { font-size: 1.15rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <!-- Sidebar -->
+      <div id="sidebarInyectado"></div>
+      <!-- /Sidebar -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <h3 class="mb-0 font-weight-bold mr-2">Salida</h3>
+              <span class="badge badge-secondary" id="pillLineas">0 artículos</span>
+            </div>
+            <a href="almacen-recepcion.html" class="btn btn-outline-secondary btn-sm">
+              <i class="typcn typcn-download-outline mr-1"></i>Ir a Entrada
+            </a>
+          </div>
+
+          <div class="row">
+
+            <!-- Izquierda: escaneo + carrito -->
+            <div class="col-lg-7 grid-margin">
+              <div class="card mb-3 scan-dock">
+                <div class="card-body py-3">
+                  <div class="seccion-eyebrow"><i class="typcn typcn-barcode"></i>Escaneo</div>
+                  <div class="d-flex position-relative" style="gap:8px">
+                    <input type="number" inputmode="numeric" class="form-control" id="cajaCantidad"
+                           min="1" step="1" value="1" title="Cantidad a agregar" aria-label="Cantidad a agregar del siguiente escaneo">
+                    <input type="text" class="form-control" id="cajaScan" autocomplete="off"
+                           placeholder="Escanea, escribe la clave o el nombre...">
+                    <button class="btn btn-outline-primary" id="btnCamara" type="button" title="Usar cámara" aria-label="Usar cámara para escanear">
+                      <i class="typcn typcn-camera-outline"></i>
+                    </button>
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="claveDropdown" style="top:100%; max-height: 280px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="loteDropdown" style="top:100%; max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                  </div>
+                  <div class="scan-hint mt-2">
+                    <span>Escribe la cantidad si es más de 1, luego dispara el lector o escribe la clave y presiona <kbd>Enter</kbd>.</span>
+                    <button type="button" id="btnAtajos" aria-expanded="false" aria-controls="scanTricks">Ver atajos para ir más rápido</button>
+                  </div>
+                  <div class="scan-tricks mt-1 d-none" id="scanTricks">
+                    Estos son opcionales, no hacen falta para usar el sistema:<br>
+                    escribe <kbd>5*</kbd> antes de escanear en vez de usar el campo de cantidad ·
+                    <kbd>Backspace</kbd> en vacío quita el último renglón (avisa y se puede deshacer) ·
+                    <kbd>Ctrl</kbd>+<kbd>Enter</kbd> registra la salida
+                  </div>
+                  <div class="alert alert-danger py-2 mt-2 d-none" id="scanError"></div>
+
+                  <div id="zonaCamara" class="d-none mt-3">
+                    <select class="form-control form-control-sm mb-2" id="fCamara"></select>
+                    <video id="video" autoplay playsinline></video>
+                    <button class="btn btn-sm btn-secondary mt-2" id="btnCerrarCamara" type="button">Cerrar cámara</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-sm mb-0" id="tablaCarrito">
+                      <thead class="bg-light">
+                        <tr>
+                          <th>Artículo</th>
+                          <th class="cart-lote">Lote a despachar</th>
+                          <th class="text-right">Cantidad</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="carritoBody"></tbody>
+                    </table>
+                  </div>
+                  <div class="carrito-vacio" id="carritoVacio">
+                    <i class="typcn typcn-shopping-cart" style="font-size:3rem"></i>
+                    <p class="mb-0 mt-2 font-weight-bold" style="color:#8a8f98">Escanea el primer artículo</p>
+                    <p class="mb-0 small">O escríbelo en el campo de arriba y presiona Enter</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Derecha: a dónde va -->
+            <div class="col-lg-5 grid-margin col-caja-derecha">
+              <div class="card">
+                <div class="card-body">
+
+                  <div class="seccion-eyebrow mb-2"><i class="typcn typcn-arrow-shuffle"></i>¿Qué se hace con esto?</div>
+                  <div class="tipo-op mb-3" id="tipoOp">
+                    <button type="button" class="btn btn-outline-success active" data-tipo="Salida">
+                      <i class="typcn typcn-arrow-forward-outline"></i>Salida
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" data-tipo="Merma">
+                      <i class="typcn typcn-trash"></i>Merma
+                    </button>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="small mb-1">Notas</label>
+                    <textarea class="form-control form-control-sm" id="fNotas" rows="2"
+                              placeholder="Referencia, observación..."></textarea>
+                  </div>
+
+                  <hr>
+                  <div class="banda-total d-flex justify-content-between align-items-end">
+                    <div>
+                      <div class="text-muted small">Total a despachar</div>
+                      <div class="caja-total"><span id="totalPiezas">0</span>
+                        <span class="text-muted" style="font-size:1rem">pzas</span></div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary bg-white" id="btnVaciar" type="button">
+                      <i class="typcn typcn-trash"></i> Vaciar
+                    </button>
+                  </div>
+
+                  <div class="alert alert-danger py-2 d-none" id="cajaError"></div>
+                  <div class="alert alert-success py-2 d-none" id="cajaOk"></div>
+
+                  <button class="btn btn-success btn-block" id="btnCobrar" disabled>
+                    <i class="typcn typcn-tick mr-1"></i><span id="btnCobrarTxt">Registrar salida</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Últimas operaciones -->
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center flex-wrap mb-2" style="gap:8px">
+                <h6 class="card-title mb-0"><i class="typcn typcn-time text-muted mr-1"></i>Últimas operaciones</h6>
+                <input type="search" class="form-control form-control-sm" id="hBuscar"
+                       placeholder="Buscar clave o artículo..." autocomplete="off">
+              </div>
+              <div class="chip-row mb-2" id="chipsTipo">
+                <button type="button" class="chip active" data-tipo-filtro="">Todas</button>
+                <button type="button" class="chip" data-tipo-filtro="Salida">Salida</button>
+                <button type="button" class="chip" data-tipo-filtro="Merma">Merma</button>
+                <button type="button" class="chip" data-tipo-filtro="Transferencia">Transferencia</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="hTabla">
+                  <thead class="bg-light">
+                    <tr><th>Fecha</th><th>Tipo</th><th>Clave</th><th>Artículo</th><th>Lote</th>
+                        <th class="text-right">Cant.</th><th>Entregado a</th><th>Área</th></tr>
+                  </thead>
+                  <tbody id="hTablaBody">
+                    <tr><td colspan="8" class="text-muted text-center">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content-wrapper -->
+        <footer class="footer"><span class="text-muted text-sm-left">Almacén Central · HGR Reynosa</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-undo" id="toastUndo" role="status" aria-live="polite">
+    <span id="toastUndoTxt"></span>
+    <button class="btn btn-sm btn-light py-0" id="btnDeshacer" type="button">Deshacer</button>
+  </div>
+
+  <!-- Confirmación propia: reemplaza confirm()/alert() del navegador para
+       que la pregunta se vea y se sienta parte de la misma app. -->
+  <div class="confirm-overlay d-none" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitulo">
+    <div class="confirm-caja">
+      <h5 id="confirmTitulo"></h5>
+      <p id="confirmMensaje"></p>
+      <div class="d-flex justify-content-end" style="gap:8px">
+        <button class="btn btn-outline-secondary" id="confirmCancelar" type="button">Cancelar</button>
+        <button class="btn btn-danger" id="confirmAceptar" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script src="vendors/zxing/zxing.min.js" onerror="console.warn('ZXing no cargó')"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    const fmtFecha = (s) => s ? new Date(s).toLocaleDateString("es-MX") : "sin fecha";
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+
+    const TIPO_BADGE = {
+      Entrada: "badge-success", Salida: "badge-primary",
+      Merma: "badge-danger", Ajuste: "badge-warning", Transferencia: "badge-info"
+    };
+
+    // ── Estado ────────────────────────────────────────────────────────
+    // Cada renglón del carrito: el artículo, sus lotes disponibles, y cuál
+    // se eligió. El lote elegido arranca en el FEFO pero se puede cambiar.
+    const carrito = [];   // { articuloId, clave, nombre, unidad, lotes[], loteSel, cantidad }
+    // Fase actual: Salida y Merma únicamente (Transferencia queda para más
+    // adelante). La Merma no se le entrega a nadie ni tiene área/programa/
+    // vale — solo se anota el motivo en Notas.
+    let tipo = "Salida";
+
+    const $ = (id) => document.getElementById(id);
+
+    // ── Lectura del código ────────────────────────────────────────────
+    // Acepta el QR (?clave=..&lote=..), el código de barras CLAVE|LOTE,
+    // o la clave suelta. También el truco de caja registradora: "5*" antes
+    // del código agrega esa cantidad de una vez (sin tocar el carrito después).
+    function leerCodigo(texto) {
+      let t = (texto || "").trim();
+      let multiplicador = 1;
+      const mMult = t.match(/^(\d{1,3})\*(.+)$/);
+      if (mMult) { multiplicador = Math.max(1, parseInt(mMult[1], 10)); t = mMult[2].trim(); }
+
+      const mClave = t.match(/[?&]clave=([^&]+)/);
+      if (mClave) {
+        const mLote = t.match(/[?&]lote=([^&]*)/);
+        return { clave: decodeURIComponent(mClave[1]), lote: mLote ? decodeURIComponent(mLote[1]) : "", multiplicador };
+      }
+      if (t.includes("|")) {
+        const [c, l] = t.split("|", 2);
+        return { clave: c.trim(), lote: (l || "").trim(), multiplicador };
+      }
+      const mSuelta = t.match(/\d{3}\.\d{3}\.\d{4}/);
+      if (mSuelta) return { clave: mSuelta[0], lote: "", multiplicador };
+      return { clave: t, lote: "", multiplicador };
+    }
+
+    // ── Feedback de audio: un tono corto para no depender de mirar la pantalla ──
+    let audioCtx = null;
+    function beep(ok) {
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = ok ? 880 : 220;
+        g.gain.value = 0.08;
+        o.start();
+        o.stop(audioCtx.currentTime + (ok ? 0.08 : 0.16));
+      } catch { /* sin audio, no es crítico */ }
+    }
+
+    function flashScan(ok) {
+      const el = $("cajaScan");
+      el.classList.remove("flash-ok", "flash-bad");
+      void el.offsetWidth; // reinicia la animación si se repite rápido
+      el.classList.add(ok ? "flash-ok" : "flash-bad");
+      setTimeout(() => el.classList.remove("flash-ok", "flash-bad"), 350);
+    }
+
+    // FEFO: caduca primero, sale primero. Los que no traen fecha van al final.
+    function ordenFefo(lotes) {
+      return lotes.slice().sort((a, b) => {
+        if (!a.caducidad && !b.caducidad) return 0;
+        if (!a.caducidad) return 1;
+        if (!b.caducidad) return -1;
+        return new Date(a.caducidad) - new Date(b.caducidad);
+      });
+    }
+
+    // tipo: "dato" (algo que ella capturó está mal, revisar) o "conexion"
+    // (problema de red/servidor, no es su culpa) — mismo mensaje rojo para
+    // los dos hacía que cualquier error se sintiera como un error propio.
+    function errScan(msg, tipo) {
+      const e = $("scanError");
+      if (!msg) { e.classList.add("d-none"); e.classList.remove("alert-conexion", "alert-dato"); return; }
+      e.textContent = msg;
+      e.classList.remove("d-none", "alert-conexion", "alert-dato");
+      e.classList.add(tipo === "conexion" ? "alert-conexion" : "alert-dato");
+    }
+    function esErrorConexion(msg) { return /Failed to fetch|NetworkError|Load failed/i.test(msg || ""); }
+
+    // ── Agregar al carrito ────────────────────────────────────────────
+    let ultimaClaveAgregada = null;
+    async function agregar(texto) {
+      errScan("");
+      const { clave, lote, multiplicador: multiplicadorTexto } = leerCodigo(texto);
+      if (!clave) return;
+      // El campo visible de Cantidad manda si no vino un truco "N*" explícito
+      // en el texto escaneado — así quien no conoce el truco igual puede
+      // agregar más de una pieza de una vez.
+      const cantidadCampo = Math.max(1, parseInt($("cajaCantidad").value, 10) || 1);
+      const multiplicador = multiplicadorTexto > 1 ? multiplicadorTexto : cantidadCampo;
+
+      let art;
+      try {
+        art = await AlmacenApi.inventario.porClave(clave);
+      } catch (err) {
+        const msg = (err && err.message) || "";
+        if (esErrorConexion(msg))
+          errScan("No se pudo conectar con el sistema. Revisa tu internet e intenta de nuevo.", "conexion");
+        else if (/404/.test(msg)) errScan("No existe la clave " + clave + ". Revisa que esté bien escrita.", "dato");
+        else errScan("Error al buscar " + clave + ": " + msg, "dato");
+        flashScan(false); beep(false);
+        return;
+      }
+
+      let lotes;
+      try {
+        lotes = ordenFefo(await AlmacenApi.lotes.porArticulo(art.id, { soloConExistencia: true }));
+      } catch (err) {
+        const msg = (err && err.message) || "";
+        errScan(
+          esErrorConexion(msg) ? "No se pudo conectar con el sistema. Intenta de nuevo." : "No se pudieron cargar los lotes de " + clave,
+          esErrorConexion(msg) ? "conexion" : "dato"
+        );
+        flashScan(false); beep(false);
+        return;
+      }
+      if (!lotes.length) { errScan(art.nombre + " no tiene existencia.", "dato"); flashScan(false); beep(false); return; }
+
+      // Si la etiqueta traía lote y ese lote tiene stock, ese manda.
+      // Si no, arranca en el FEFO (el primero de la lista ya ordenada).
+      let elegido = lotes[0].lote;
+      if (lote) {
+        const encontrado = lotes.find(l => l.lote === lote);
+        if (encontrado) elegido = encontrado.lote;
+        else errScan("El lote " + lote + " no tiene existencia; se tomó el más próximo a caducar.", "dato");
+      }
+
+      // Mismo artículo y mismo lote ya en el carrito: solo suma (respeta el multiplicador "5*").
+      const ya = carrito.find(c => c.articuloId === art.id && c.loteSel === elegido);
+      if (ya) {
+        ya.cantidad += multiplicador;
+      } else {
+        carrito.push({
+          articuloId: art.id, clave: art.clave, nombre: art.nombre,
+          unidad: art.unidad, lotes, loteSel: elegido, cantidad: multiplicador
+        });
+      }
+      ultimaClaveAgregada = art.clave;
+      flashScan(true); beep(true);
+      $("cajaCantidad").value = 1; // no se queda pegada para el siguiente escaneo
+      render(true);
+    }
+
+    // ── Pintar el carrito ─────────────────────────────────────────────
+    // resaltarUltimo: cuando viene de un escaneo recién hecho, marca esa fila
+    // con una animación breve para confirmar visualmente qué se acaba de agregar.
+    function render(resaltarUltimo) {
+      const body = $("carritoBody");
+      $("carritoVacio").classList.toggle("d-none", carrito.length > 0);
+
+      body.innerHTML = carrito.map((c, i) => {
+        const loteObj = c.lotes.find(l => l.lote === c.loteSel) || { cantidad: 0 };
+        const excede  = c.cantidad > loteObj.cantidad;
+        const esFefo  = c.lotes[0] && c.lotes[0].lote === c.loteSel;
+        const esNuevo = resaltarUltimo && i === carrito.length - 1 && c.clave === ultimaClaveAgregada;
+
+        const opciones = c.lotes.map(l => {
+          const sel = l.lote === c.loteSel ? " selected" : "";
+          const fefo = (c.lotes[0] && l.lote === c.lotes[0].lote) ? " · FEFO" : "";
+          return `<option value="${esc(l.lote)}"${sel}>` +
+                 `${esc(l.lote)} · vence ${fmtFecha(l.caducidad)} · ${fmt(l.cantidad)} disp.${fefo}` +
+                 `</option>`;
+        }).join("");
+
+        return `<tr class="${excede ? "linea-mala" : ""}${esNuevo ? " linea-nueva" : ""}">
+          <td>
+            <div class="cart-clave">${esc(c.clave)}</div>
+            <div class="cart-nombre">${esc(c.nombre)}</div>
+          </td>
+          <td class="cart-lote">
+            <select class="form-control form-control-sm" data-lote="${i}" aria-label="Lote a despachar de ${esc(c.nombre)}">${opciones}</select>
+            ${esFefo ? "" : '<span class="aviso-fefo">No es el lote FEFO</span>'}
+          </td>
+          <td class="text-right">
+            <div class="cant-wrap">
+              <button class="btn btn-sm btn-outline-secondary btn-step" data-dec="${i}" aria-label="Restar uno" type="button">−</button>
+              <input type="number" inputmode="numeric" class="form-control form-control-sm cart-cant"
+                     data-cant="${i}" min="1" step="1" value="${c.cantidad}" aria-label="Cantidad de ${esc(c.nombre)}">
+              <button class="btn btn-sm btn-outline-secondary btn-step" data-inc="${i}" aria-label="Sumar uno" type="button">+</button>
+            </div>
+            <small class="${excede ? "text-danger font-weight-bold" : "text-muted"}">
+              ${excede ? "solo hay " + fmt(loteObj.cantidad) : fmt(loteObj.cantidad) + " disp."}
+            </small>
+          </td>
+          <td class="text-right">
+            <button class="btn btn-outline-danger btn-icono-tabla" data-quitar="${i}" aria-label="Quitar ${esc(c.nombre)} del carrito" title="Quitar">
+              <i class="typcn typcn-times"></i>
+            </button>
+          </td>
+        </tr>`;
+      }).join("");
+
+      const piezas = carrito.reduce((s, c) => s + (Number(c.cantidad) || 0), 0);
+      $("totalPiezas").textContent = fmt(piezas);
+      $("pillLineas").textContent = carrito.length + (carrito.length === 1 ? " artículo" : " artículos");
+
+      const hayExceso = carrito.some(c => {
+        const l = c.lotes.find(x => x.lote === c.loteSel) || { cantidad: 0 };
+        return c.cantidad > l.cantidad || c.cantidad <= 0;
+      });
+      $("btnCobrar").disabled = carrito.length === 0 || hayExceso;
+    }
+
+    // Delegación: cambiar lote, cambiar cantidad, steppers +/-, quitar renglón.
+    $("carritoBody").addEventListener("change", (e) => {
+      const iL = e.target.getAttribute("data-lote");
+      if (iL !== null) { carrito[+iL].loteSel = e.target.value; render(); return; }
+      const iC = e.target.getAttribute("data-cant");
+      if (iC !== null) { carrito[+iC].cantidad = Math.max(0, Number(e.target.value) || 0); render(); }
+    });
+    $("carritoBody").addEventListener("input", (e) => {
+      const iC = e.target.getAttribute("data-cant");
+      if (iC !== null) { carrito[+iC].cantidad = Math.max(0, Number(e.target.value) || 0); render(); }
+    });
+    // Un input aparece con valor "1" seguido: seleccionarlo entero para que
+    // teclear encima lo reemplace, sin tener que borrar primero.
+    $("carritoBody").addEventListener("focusin", (e) => {
+      if (e.target.matches(".cart-cant")) e.target.select();
+    });
+    $("carritoBody").addEventListener("click", (e) => {
+      const quitar = e.target.closest("[data-quitar]");
+      if (quitar) {
+        const i = +quitar.getAttribute("data-quitar");
+        quitarConDeshacer(i);
+        return;
+      }
+      const inc = e.target.closest("[data-inc]");
+      if (inc) { carrito[+inc.getAttribute("data-inc")].cantidad += 1; render(); return; }
+      const dec = e.target.closest("[data-dec]");
+      if (dec) {
+        const it = carrito[+dec.getAttribute("data-dec")];
+        it.cantidad = Math.max(1, it.cantidad - 1);
+        render();
+      }
+    });
+
+    // ── Quitar con "deshacer" (toast) ────────────────────────────────
+    let ultimoQuitado = null;
+    let ultimoQuitadoTimer = null;
+    function quitarConDeshacer(i) {
+      const [item] = carrito.splice(i, 1);
+      ultimoQuitado = item;
+      render();
+      enfocarScan();
+      beep(false); // aviso audible: no queda silencioso que se quitó algo
+      mostrarToast(`Se quitó ${item.nombre}.`);
+    }
+    function mostrarToast(msg) {
+      clearTimeout(ultimoQuitadoTimer);
+      $("toastUndoTxt").textContent = msg;
+      $("toastUndo").classList.add("show");
+      ultimoQuitadoTimer = setTimeout(() => $("toastUndo").classList.remove("show"), 5000);
+    }
+    $("btnDeshacer").addEventListener("click", () => {
+      if (!ultimoQuitado) return;
+      carrito.push(ultimoQuitado);
+      ultimoQuitado = null;
+      $("toastUndo").classList.remove("show");
+      render();
+      enfocarScan();
+    });
+
+    // Atajos: colapsados por defecto para no saturar la pantalla que más
+    // se usa; un clic los muestra/oculta.
+    $("btnAtajos").addEventListener("click", () => {
+      const abierto = !$("scanTricks").classList.contains("d-none");
+      $("scanTricks").classList.toggle("d-none", abierto);
+      $("btnAtajos").textContent = abierto ? "Ver atajos" : "Ocultar atajos";
+      $("btnAtajos").setAttribute("aria-expanded", String(!abierto));
+    });
+
+    // ── Escaneo ───────────────────────────────────────────────────────
+    function enfocarScan() { const s = $("cajaScan"); s.focus(); s.select(); }
+
+    // Enter en Cantidad pasa al campo de escaneo — mismo hábito de Excel de
+    // Enter = siguiente celda que ya se usa en Entrada.
+    $("cajaCantidad").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      enfocarScan();
+    });
+
+    const claveDropdown = $("claveDropdown");
+    const loteDropdown  = $("loteDropdown");
+
+    // Agrega lo que haya en cajaScan (+ el lote elegido del desplegable, si
+    // se eligió uno), y limpia el campo y los desplegables para dejar todo
+    // listo para el siguiente.
+    async function agregarDesdeCaja(texto, lote) {
+      let v = texto.trim();
+      if (!v) return;
+      if (lote && !v.includes("|") && !/[?&]lote=/.test(v)) v += "|" + lote;
+
+      $("cajaScan").value = "";
+      claveDropdown.style.display = "none";
+      loteDropdown.style.display = "none";
+      await agregar(v);
+      enfocarScan();
+    }
+
+    $("cajaScan").addEventListener("keydown", async (e) => {
+      // Backspace con el campo vacío = quitar el último renglón agregado
+      // (evita ir con el mouse hasta la fila cuando fue un escaneo de más).
+      if (e.key === "Backspace" && !e.target.value && carrito.length) {
+        e.preventDefault();
+        quitarConDeshacer(carrito.length - 1);
+        return;
+      }
+      if (e.key === "Escape") {
+        claveDropdown.style.display = "none";
+        return;
+      }
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      // Si el desplegable de coincidencias está abierto, Enter toma la
+      // primera opción (igual que en Recepción) en vez de intentar agregar
+      // el texto tal cual, que probablemente sea solo un fragmento del nombre.
+      const primera = claveDropdown.querySelector("button");
+      if (claveDropdown.style.display !== "none" && primera) { primera.click(); return; }
+      await agregarDesdeCaja(e.target.value);
+    });
+
+    // Mientras se escribe: si ya parece una clave completa, se sugieren sus
+    // lotes reales (fecha de caducidad y existencia). Si no —por ejemplo se
+    // está escribiendo el nombre del artículo o solo un pedazo de la
+    // clave—, se busca por clave o nombre y se muestra un desplegable con
+    // las coincidencias, igual que el buscador de Recepción.
+    let debounceCaja = null;
+    $("cajaScan").addEventListener("input", (e) => {
+      clearTimeout(debounceCaja);
+      const val = e.target.value.trim();
+      if (!val) { claveDropdown.style.display = "none"; loteDropdown.style.display = "none"; return; }
+
+      debounceCaja = setTimeout(async () => {
+        const { clave } = leerCodigo(val);
+        const esClaveCompleta = /^\d{2,3}\.\d{3}\.\d{4}$/.test(clave);
+
+        if (esClaveCompleta) {
+          claveDropdown.style.display = "none";
+          try {
+            const art = await AlmacenApi.inventario.porClave(clave);
+            const lotes = ordenFefo(await AlmacenApi.lotes.porArticulo(art.id, { soloConExistencia: true }));
+            if (!lotes.length) { loteDropdown.style.display = "none"; return; }
+
+            loteDropdown.innerHTML = lotes.map((l, i) => `
+              <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3"
+                      data-lote="${esc(l.lote)}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="small font-weight-bold" style="color:#5b4fcf">${esc(l.lote)}</span>
+                  ${i === 0 ? '<span class="badge badge-success" style="font-size:.6rem">FEFO</span>' : ""}
+                </div>
+                <div class="small text-muted">vence ${fmtFecha(l.caducidad)} · ${fmt(l.cantidad)} disponibles</div>
+              </button>`).join("");
+
+            loteDropdown.querySelectorAll("button").forEach(btn => {
+              btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                agregarDesdeCaja(clave, this.getAttribute("data-lote"));
+              });
+            });
+
+            loteDropdown.style.display = "block";
+          } catch { loteDropdown.style.display = "none"; }
+          return;
+        }
+
+        loteDropdown.style.display = "none";
+        if (val.length < 2) { claveDropdown.style.display = "none"; return; }
+        try {
+          const claves = await AlmacenApi.inventario.buscarClaves(val, 30);
+          if (!claves.length) {
+            claveDropdown.innerHTML = '<div class="list-group-item text-muted text-center py-2">Sin coincidencias</div>';
+            claveDropdown.style.display = "block";
+            return;
+          }
+          // Ojo: el mismo texto de lote puede repetirse en artículos
+          // distintos con caducidades distintas — por eso la fecha va junto
+          // al badge, si no, no hay forma de saber cuál de los dos es.
+          claveDropdown.innerHTML = claves.map(c => `
+            <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3"
+                    data-clave="${esc(c.clave)}" data-lote="${esc(c.loteCoincidente || "")}">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small font-weight-bold" style="color:#5b4fcf">${esc(c.clave)}</span>
+                ${c.loteCoincidente ? `<span class="badge badge-info" style="font-size:.6rem">Lote ${esc(c.loteCoincidente)} · vence ${fmtFecha(c.loteCoincidenteCaducidad)}</span>` : ""}
+              </div>
+              <div class="small" style="white-space:normal">${esc(c.nombre)}</div>
+              <div class="small text-muted">${esc(c.unidad)}</div>
+            </button>`).join("");
+
+          // Si la coincidencia fue por lote (no por clave/nombre), se agrega
+          // con ese lote — si no, cae al FEFO por defecto.
+          claveDropdown.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("click", function (ev) {
+              ev.preventDefault();
+              agregarDesdeCaja(this.getAttribute("data-clave"), this.getAttribute("data-lote"));
+            });
+          });
+
+          claveDropdown.style.display = "block";
+        } catch { claveDropdown.style.display = "none"; }
+      }, 300);
+    });
+    // Cerrar los desplegables si se hace clic fuera de ellos.
+    document.addEventListener("click", (e) => {
+      if (!claveDropdown.contains(e.target) && e.target !== $("cajaScan")) claveDropdown.style.display = "none";
+      if (!loteDropdown.contains(e.target) && e.target !== $("cajaScan")) loteDropdown.style.display = "none";
+    });
+
+    // ── Atajo global: Ctrl+Enter registra ────────────────────────────
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        e.preventDefault();
+        if (!$("btnCobrar").disabled) $("btnCobrar").click();
+      }
+    });
+
+    // ── Tipo de operación ─────────────────────────────────────────────
+    // Fase actual: ni Salida ni Merma piden a quién/a dónde — solo el
+    // motivo/referencia en Notas.
+    $("tipoOp").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-tipo]");
+      if (!btn) return;
+      tipo = btn.getAttribute("data-tipo");
+      [...$("tipoOp").querySelectorAll("[data-tipo]")].forEach(b => b.classList.toggle("active", b === btn));
+
+      const esMerma = tipo === "Merma";
+      $("fNotas").placeholder = esMerma ? "Motivo de la merma..." : "Referencia, observación...";
+      $("btnCobrarTxt").textContent = esMerma ? "Registrar merma" : "Registrar salida";
+      enfocarScan();
+    });
+
+    // ── Confirmación propia (reemplaza confirm()/alert() del navegador) ──
+    // Devuelve una promesa que resuelve true/false según el botón que se
+    // presione. Un solo modal reutilizado en vez de uno distinto por caso.
+    function pedirConfirmacion({ titulo, mensaje, textoConfirmar = "Confirmar", peligro = true }) {
+      return new Promise((resolve) => {
+        $("confirmTitulo").textContent = titulo;
+        $("confirmMensaje").textContent = mensaje;
+        $("confirmAceptar").textContent = textoConfirmar;
+        $("confirmAceptar").className = "btn " + (peligro ? "btn-danger" : "btn-success");
+        $("confirmOverlay").classList.remove("d-none");
+
+        function limpiar(resultado) {
+          $("confirmOverlay").classList.add("d-none");
+          $("confirmAceptar").removeEventListener("click", onAceptar);
+          $("confirmCancelar").removeEventListener("click", onCancelar);
+          document.removeEventListener("keydown", onEscape);
+          resolve(resultado);
+        }
+        function onAceptar() { limpiar(true); }
+        function onCancelar() { limpiar(false); }
+        function onEscape(e) { if (e.key === "Escape") limpiar(false); }
+
+        $("confirmAceptar").addEventListener("click", onAceptar);
+        $("confirmCancelar").addEventListener("click", onCancelar);
+        document.addEventListener("keydown", onEscape);
+        $("confirmAceptar").focus();
+      });
+    }
+
+    // ── Registrar ─────────────────────────────────────────────────────
+    function aviso(id, msg) {
+      const otro = id === "cajaOk" ? "cajaError" : "cajaOk";
+      $(otro).classList.add("d-none");
+      const e = $(id);
+      e.innerHTML = msg;
+      e.classList.remove("d-none");
+      if (id === "cajaOk") setTimeout(() => e.classList.add("d-none"), 6000);
+    }
+
+    $("btnCobrar").addEventListener("click", async function () {
+      if (!carrito.length) return;
+
+      const piezas = carrito.reduce((s, c) => s + (Number(c.cantidad) || 0), 0);
+      const esMerma = tipo === "Merma";
+      const confirmado = await pedirConfirmacion({
+        titulo: esMerma ? "¿Confirmar la merma?" : "¿Confirmar la salida?",
+        mensaje: esMerma
+          ? `Se van a dar de baja ${fmt(piezas)} pieza(s) de ${carrito.length} artículo(s) del inventario. Esto no se puede deshacer después de confirmar.`
+          : `Se va a registrar la salida de ${fmt(piezas)} pieza(s) de ${carrito.length} artículo(s).`,
+        textoConfirmar: esMerma ? "Sí, dar de baja" : "Sí, registrar",
+        peligro: esMerma
+      });
+      if (!confirmado) { enfocarScan(); return; }
+
+      const dto = {
+        tipo,
+        notas: $("fNotas").value.trim() || undefined,
+        items: carrito.map(c => ({
+          claveArticulo: c.clave,
+          lote:          c.loteSel,
+          cantidad:      c.cantidad
+        }))
+      };
+
+      this.disabled = true;
+      const txt = $("btnCobrarTxt").textContent;
+      $("btnCobrarTxt").textContent = "Registrando...";
+      try {
+        const res = await AlmacenApi.movimientos.caja(dto);
+        aviso("cajaOk", `<strong>Listo.</strong> ${res.registrados} movimiento(s) registrado(s).`);
+        carrito.length = 0;
+        $("fNotas").value = "";
+        render();
+        cargarHistorial();
+        enfocarScan();
+      } catch (err) {
+        // El backend manda la lista de renglones que fallaron; el cliente la
+        // deja en err.datos.errores. Se listan todos para que el de la caja
+        // sepa exactamente que arreglar.
+        const msg = (err && err.message) || "";
+        const lista = err && err.datos && err.datos.errores;
+        let detalle;
+        if (esErrorConexion(msg)) {
+          detalle = "No se pudo conectar con el sistema. Revisa tu internet e intenta de nuevo.";
+        } else if (lista && lista.length) {
+          detalle = "<ul class='mb-0 pl-3'>" + lista.map(x => `<li>${esc(x)}</li>`).join("") + "</ul>";
+        } else {
+          detalle = esc(msg || "Error desconocido");
+        }
+        aviso("cajaError", "<strong>No se registró nada.</strong> " + detalle);
+      } finally {
+        this.disabled = false;
+        $("btnCobrarTxt").textContent = txt;
+        render();
+      }
+    });
+
+    $("btnVaciar").addEventListener("click", async () => {
+      if (carrito.length) {
+        const confirmado = await pedirConfirmacion({
+          titulo: "¿Vaciar el carrito?",
+          mensaje: `Se van a quitar los ${carrito.length} artículo(s) capturados. Tendrás que volver a escanearlos si te equivocaste.`,
+          textoConfirmar: "Sí, vaciar",
+          peligro: true
+        });
+        if (!confirmado) { enfocarScan(); return; }
+      }
+      carrito.length = 0;
+      render();
+      enfocarScan();
+    });
+
+    // ── Cámara ────────────────────────────────────────────────────────
+    let lector = null;
+
+    async function listarCamaras() {
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        const cams = devs.filter(d => d.kind === "videoinput");
+        $("fCamara").innerHTML = cams
+          .map((c, i) => `<option value="${esc(c.deviceId)}">${esc(c.label || "Cámara " + (i + 1))}</option>`).join("");
+        const trasera = cams.find(c => /back|trasera|rear|environment/i.test(c.label));
+        if (trasera) $("fCamara").value = trasera.deviceId;
+      } catch { /* sin permiso todavía */ }
+    }
+
+    async function abrirCamara() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        errScan("Este navegador no permite la cámara aquí (se requiere HTTPS). Usa el lector USB.");
+        return;
+      }
+      if (!window.ZXing) { errScan("La librería de lectura no cargó. Usa el lector USB."); return; }
+
+      $("zonaCamara").classList.remove("d-none");
+      await listarCamaras();
+
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128]);
+      lector = new ZXing.BrowserMultiFormatReader(hints);
+
+      const deviceId = $("fCamara").value;
+      const restr = deviceId ? { video: { deviceId: { exact: deviceId } } }
+                             : { video: { facingMode: "environment" } };
+      try {
+        let ultimo = 0;
+        await lector.decodeFromConstraints(restr, "video", (res) => {
+          if (!res) return;
+          // Un respiro entre lecturas: la cámara dispara muchas veces por segundo.
+          const ahora = Date.now();
+          if (ahora - ultimo < 1200) return;
+          ultimo = ahora;
+          agregar(res.getText());
+        });
+      } catch (err) {
+        errScan("No se pudo abrir la cámara: " + err.message);
+        cerrarCamara();
+      }
+    }
+
+    function cerrarCamara() {
+      if (lector) { lector.reset(); lector = null; }
+      $("zonaCamara").classList.add("d-none");
+      enfocarScan();
+    }
+
+    $("btnCamara").addEventListener("click", abrirCamara);
+    $("btnCerrarCamara").addEventListener("click", cerrarCamara);
+    $("fCamara").addEventListener("change", () => { if (lector) { cerrarCamara(); abrirCamara(); } });
+    window.addEventListener("beforeunload", cerrarCamara);
+
+    // ── Historial ─────────────────────────────────────────────────────
+    // tipo/q son las mismas claves que ya acepta el backend en /movimientos
+    // (ver AlmacenController.Movimientos), así que el filtro va directo
+    // al servidor y no hay que armar nada del lado del cliente.
+    const historialFiltro = { tipo: "", q: "" };
+
+    async function cargarHistorial() {
+      try {
+        const data = await AlmacenApi.movimientos.listar({
+          pagina: 1, tamano: 15,
+          tipo: historialFiltro.tipo || undefined,
+          q:    historialFiltro.q || undefined
+        });
+        const filas = data.datos || [];
+        $("hTablaBody").innerHTML = filas.length
+          ? filas.map(m => `<tr>
+              <td class="small">${fmtFecha(m.fecha)}</td>
+              <td><span class="badge ${TIPO_BADGE[m.tipo] || "badge-secondary"}">${esc(m.tipo)}</span></td>
+              <td class="cart-clave">${esc(m.clave)}</td>
+              <td class="cart-nombre">${esc(m.nombre)}</td>
+              <td class="small">${esc(m.lote || "—")}</td>
+              <td class="text-right font-weight-bold">${fmt(m.cantidad)}</td>
+              <td class="small">${esc(m.entregadoA || "—")}</td>
+              <td class="small">${esc(m.areaDestino || "—")}</td>
+            </tr>`).join("")
+          : `<tr><td colspan="8" class="text-muted text-center py-3">${
+              (historialFiltro.tipo || historialFiltro.q) ? "Sin resultados con ese filtro" : "Sin movimientos todavía"
+            }</td></tr>`;
+
+      } catch (err) {
+        $("hTablaBody").innerHTML =
+          `<tr><td colspan="8" class="text-danger text-center">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // Chips de tipo: filtran al toque, sin botón "Buscar" de por medio.
+    $("chipsTipo").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-tipo-filtro]");
+      if (!btn) return;
+      historialFiltro.tipo = btn.getAttribute("data-tipo-filtro");
+      document.querySelectorAll("#chipsTipo .chip").forEach(c => c.classList.toggle("active", c === btn));
+      cargarHistorial();
+    });
+
+    // Búsqueda: filtra mientras se escribe (con una pausa corta) y también
+    // con Enter. Al buscar con Enter el campo se vacía solo -para quedar
+    // listo para la siguiente consulta sin tener que borrarlo a mano-, pero
+    // el filtro de tipo (los chips) se queda como estaba.
+    let debounceHBuscar = null;
+    $("hBuscar").addEventListener("input", (e) => {
+      clearTimeout(debounceHBuscar);
+      debounceHBuscar = setTimeout(() => {
+        historialFiltro.q = e.target.value.trim();
+        cargarHistorial();
+      }, 350);
+    });
+    $("hBuscar").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      clearTimeout(debounceHBuscar);
+      historialFiltro.q = e.target.value.trim();
+      cargarHistorial();
+      e.target.value = "";
+    });
+
+    $("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    // Si llegan desde el escáner con clave (y lote), cae directo al carrito.
+    const urlP = new URLSearchParams(location.search);
+
+    Auth.exigirSesion("almacen").then(async (s) => {
+      if (!s) return;
+      await cargarHistorial();
+      if (urlP.get("clave")) {
+        const l = urlP.get("lote");
+        await agregar(urlP.get("clave") + (l ? "|" + l : ""));
+      }
+      render();
+      enfocarScan();
+    });
+  })();
+  </script>
+</body>
+</html>

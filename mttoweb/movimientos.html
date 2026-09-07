@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>MTTO · Movimientos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Movimientos</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <!-- Formulario -->
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Registrar movimiento</h4>
+                  <div class="alert alert-danger d-none" id="errorMovimiento"></div>
+                  <div class="alert alert-success d-none" id="exitoMovimiento"></div>
+                  <form id="formMovimiento">
+                    <div class="form-group">
+                      <label>Artículo *</label>
+                      <select class="form-control" id="campoArticulo" required>
+                        <option value="">Selecciona un artículo…</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Tipo de movimiento *</label>
+                      <select class="form-control" id="campoTipo" required></select>
+                    </div>
+                    <div class="form-group" id="grupoDestino" style="display:none;">
+                      <label>Almacén destino *</label>
+                      <select class="form-control" id="campoDestino"></select>
+                    </div>
+                    <div class="form-group">
+                      <label>Cantidad *</label>
+                      <input type="number" step="0.001" min="0.001" class="form-control" id="campoCantidad" required>
+                    </div>
+                    <div class="form-group">
+                      <label>Responsable</label>
+                      <input type="text" class="form-control" id="campoResponsable" maxlength="120">
+                    </div>
+                    <div class="form-group">
+                      <label>Observaciones</label>
+                      <textarea class="form-control" id="campoObservaciones" maxlength="500" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Registrar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bitácora -->
+            <div class="col-lg-8 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Bitácora reciente</h4>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExportar">
+                      <i class="typcn typcn-download mr-1"></i>Exportar
+                    </button>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Folio</th>
+                          <th>Fecha</th>
+                          <th>Tipo</th>
+                          <th>Artículo</th>
+                          <th class="text-right">Cantidad</th>
+                          <th class="text-right">Stock resultante</th>
+                          <th>Responsable</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaMovimientos">
+                        <tr><td colspan="7">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script>Auth.exigirSesion("mtto");</script>
+  <script src="js/mtto-api.js"></script>
+  <script src="js/mtto-movimientos.js"></script>
+</body>
+</html>

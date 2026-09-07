@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Escanear</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    #video { width: 100%; max-width: 480px; border-radius: 4px; background: #000; }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <div id="sidebarInyectado"></div>
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <h3 class="mb-3 font-weight-bold">Escanear QR / código de barras</h3>
+
+          <!-- Advertencia HTTPS -->
+          <div class="alert alert-info mb-3">
+            <strong>Nota:</strong> La cámara requiere HTTPS (o localhost). Si el sitio está en HTTP, usa la entrada manual de abajo.
+            Para habilitar la cámara en celulares, accede por <strong>https://servidor-hgr.hgreynosa.com:8443</strong>.
+            <br>La primera vez en cada celular hay que aceptar también el certificado de la API:
+            abre <strong><a href="https://servidor-hgr.hgreynosa.com:8444/api/almacen/programas" target="_blank" rel="noopener">https://servidor-hgr.hgreynosa.com:8444</a></strong>,
+            acepta el aviso, y regresa aquí.
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 grid-margin">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Cámara</h5>
+                  <div id="errorCamara" class="alert alert-danger d-none"></div>
+                  <div id="exitoEscaneo" class="alert alert-success d-none"></div>
+
+                  <div class="form-group">
+                    <label>Cámara</label>
+                    <select class="form-control form-control-sm" id="fCamara"></select>
+                  </div>
+                  <video id="video" autoplay playsinline></video>
+                  <div class="mt-2">
+                    <button class="btn btn-primary mr-2" id="btnIniciar">Iniciar cámara</button>
+                    <button class="btn btn-secondary d-none" id="btnDetener">Detener</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 grid-margin">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Código manual / escáner USB</h5>
+                  <p class="text-muted small">Escribe o pega la clave SSA, el URL del QR, o escanea con un escáner USB (actúa como teclado).</p>
+                  <div id="errorManual" class="alert alert-danger d-none"></div>
+                  <form id="formManual">
+                    <div class="form-group">
+                      <input type="text" class="form-control" id="fCodigoManual"
+                        placeholder="060.123.4567 ó URL completo" autofocus autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Buscar artículo</button>
+                  </form>
+
+                  <!-- Resultado -->
+                  <div id="resultadoArticulo" class="d-none mt-3">
+                    <hr>
+                    <h6 id="resNombre"></h6>
+                    <p class="mb-1"><strong>Clave:</strong> <span id="resClave"></span></p>
+                    <p class="mb-1 d-none" id="resLoteWrap"><strong>Lote:</strong> <span id="resLote" class="badge badge-info"></span></p>
+                    <p class="mb-1"><strong>Unidad:</strong> <span id="resUnidad"></span></p>
+                    <p class="mb-1"><strong>Stock actual:</strong> <span id="resStock"></span></p>
+                    <p class="mb-2"><strong>Nivel:</strong> <span id="resNivel"></span></p>
+                    <div class="btn-group">
+                      <a id="btnVerInventario" href="#" class="btn btn-sm btn-outline-primary">Ver inventario</a>
+                      <a id="btnRegistrarMov" href="#" class="btn btn-sm btn-outline-success">Registrar movimiento</a>
+                      <a id="btnEtiqueta"     href="#" class="btn btn-sm btn-outline-secondary">Etiqueta</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer"><span class="text-muted">Almacén Central · HGR Reynosa</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script src="vendors/zxing/zxing.min.js" onerror="console.warn('ZXing no cargó')"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const NIVEL_BADGE = { "Sin stock": "badge-dark", "Bajo minimo": "badge-danger", "Normal": "badge-success", "Sobre maximo": "badge-warning" };
+
+    let lector = null, escaneando = false;
+
+    function mostrarError(msg, id) { const e = document.getElementById(id || "errorCamara"); e.textContent = msg; e.classList.remove("d-none"); }
+    function ocultarError(id)      { document.getElementById(id || "errorCamara").classList.add("d-none"); }
+
+    // Extrae clave SSA y lote del texto escaneado.
+    // Acepta: URL del QR (?clave=..&lote=..), "CLAVE|LOTE" del código de
+    // barras, "060.xxx.xxxx" suelto, o código puro.
+    function leerCodigo(texto) {
+      const t = (texto || "").trim();
+
+      // 1) URL del QR
+      const mClave = t.match(/[?&]clave=([^&]+)/);
+      if (mClave) {
+        const mLote = t.match(/[?&]lote=([^&]*)/);
+        return {
+          clave: decodeURIComponent(mClave[1]),
+          lote:  mLote ? decodeURIComponent(mLote[1]) : ""
+        };
+      }
+
+      // 2) Código de barras CLAVE|LOTE
+      if (t.includes("|")) {
+        const [c, l] = t.split("|", 2);
+        return { clave: c.trim(), lote: (l || "").trim() };
+      }
+
+      // 3) Clave suelta dentro de otro texto
+      const mSuelta = t.match(/\d{3}\.\d{3}\.\d{4}/);
+      if (mSuelta) return { clave: mSuelta[0], lote: "" };
+
+      return { clave: t, lote: "" };
+    }
+
+    async function buscarArticulo(texto, errorId) {
+      const { clave, lote } = leerCodigo(texto);
+      if (!clave) { mostrarError("Código no reconocido: " + texto, errorId); return; }
+      try {
+        const art = await AlmacenApi.inventario.porClave(clave);
+        mostrarResultado(art, lote);
+      } catch (err) {
+        // Distinguir "no existe" de un fallo de red/certificado: si el fetch
+        // ni siquiera llegó al servidor el mensaje no viene de la API.
+        const msg = (err && err.message) || "";
+        if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+          mostrarError(
+            "No se pudo contactar la API (" + window.MTTO_CONFIG.API_BASE_URL + "). " +
+            "Si es el certificado, abre esa dirección una vez en el navegador y acéptalo.",
+            errorId);
+        } else if (/404/.test(msg)) {
+          mostrarError("Artículo no encontrado: " + clave, errorId);
+        } else {
+          mostrarError("Error al buscar " + clave + ": " + msg, errorId);
+        }
+      }
+    }
+
+    async function mostrarResultado(art, lote) {
+      document.getElementById("resNombre").textContent  = art.nombre;
+      document.getElementById("resClave").textContent   = art.clave;
+      document.getElementById("resUnidad").textContent  = art.unidad;
+      document.getElementById("resStock").textContent   = fmt(art.stockActual);
+      const nb = document.getElementById("resNivel");
+      nb.innerHTML = `<span class="badge ${NIVEL_BADGE[art.nivel] || 'badge-secondary'}">${esc(art.nivel)}</span>`;
+
+      // Lote leído de la etiqueta (si la etiqueta lo traía). Se busca su
+      // caducidad real contra el inventario: el texto del lote solo, sin
+      // fecha, no basta para confirmar que es el mismo lote físico.
+      const loteWrap = document.getElementById("resLoteWrap");
+      if (lote) {
+        let texto = lote;
+        try {
+          const lotes = await AlmacenApi.lotes.porArticulo(art.id, { soloConExistencia: false });
+          const encontrado = lotes.find(l => l.lote === lote);
+          if (encontrado) {
+            const fecha = encontrado.caducidad ? new Date(encontrado.caducidad).toLocaleDateString("es-MX") : "sin fecha";
+            texto = `${lote} · vence ${fecha}`;
+          } else {
+            texto = `${lote} (no encontrado en existencia)`;
+          }
+        } catch { /* si falla la consulta, se muestra solo el texto leído */ }
+        document.getElementById("resLote").textContent = texto;
+        loteWrap.classList.remove("d-none");
+      } else {
+        loteWrap.classList.add("d-none");
+      }
+
+      // El movimiento arrastra clave + lote: así el escaneo deja listo el
+      // artículo y el lote exacto que se va a mover / mermar / sacar.
+      const qsMov = `clave=${encodeURIComponent(art.clave)}` +
+                    (lote ? `&lote=${encodeURIComponent(lote)}` : "");
+      document.getElementById("btnVerInventario").href = `almacen-inventario.html?clave=${encodeURIComponent(art.clave)}`;
+      document.getElementById("btnRegistrarMov").href  = `almacen-movimientos.html?${qsMov}`;
+      document.getElementById("btnEtiqueta").href      = `almacen-etiquetas.html?id=${art.id}`;
+      document.getElementById("resultadoArticulo").classList.remove("d-none");
+    }
+
+    // ── Cámara ─────────────────────────────────────────────────────────
+    async function listarCamaras() {
+      const sel = document.getElementById("fCamara");
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        const cams = devs.filter(d => d.kind === "videoinput");
+        sel.innerHTML = cams.map((c, i) => `<option value="${esc(c.deviceId)}">${esc(c.label || "Cámara " + (i+1))}</option>`).join("");
+        const trasera = cams.find(c => /back|trasera|rear|environment/i.test(c.label));
+        if (trasera) sel.value = trasera.deviceId;
+      } catch { /* sin permisos aún */ }
+    }
+
+    async function iniciar() {
+      ocultarError();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        mostrarError("El navegador no permite la cámara en este origen (HTTP). Usa HTTPS o la entrada manual.");
+        return;
+      }
+      if (!window.ZXing) { mostrarError("Librería de lectura de QR no cargó. Usa la entrada manual."); return; }
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128]);
+      lector = new ZXing.BrowserMultiFormatReader(hints);
+      const deviceId = document.getElementById("fCamara").value;
+      const restricciones = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: "environment" } };
+      try {
+        await lector.decodeFromConstraints(restricciones, "video", (res) => {
+          if (res && escaneando) {
+            escaneando = false;
+            detener();
+            document.getElementById("exitoEscaneo").textContent = "Código leído: " + res.getText();
+            document.getElementById("exitoEscaneo").classList.remove("d-none");
+            buscarArticulo(res.getText(), "errorCamara");
+          }
+        });
+        escaneando = true;
+        document.getElementById("btnIniciar").classList.add("d-none");
+        document.getElementById("btnDetener").classList.remove("d-none");
+        await listarCamaras();
+      } catch (err) {
+        if (err.name === "NotAllowedError") mostrarError("Se requiere permiso de cámara.");
+        else if (err.name === "NotFoundError") mostrarError("Sin cámara detectada.");
+        else mostrarError("Error al iniciar: " + err.message);
+      }
+    }
+
+    function detener() {
+      escaneando = false;
+      if (lector) { lector.reset(); lector = null; }
+      document.getElementById("btnIniciar").classList.remove("d-none");
+      document.getElementById("btnDetener").classList.add("d-none");
+    }
+
+    document.getElementById("btnIniciar").addEventListener("click", iniciar);
+    document.getElementById("btnDetener").addEventListener("click", detener);
+    document.getElementById("fCamara").addEventListener("change", () => { if (escaneando) { detener(); iniciar(); } });
+    window.addEventListener("beforeunload", detener);
+
+    // ── Manual ─────────────────────────────────────────────────────────
+    document.getElementById("formManual").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      ocultarError("errorManual");
+      document.getElementById("resultadoArticulo").classList.add("d-none");
+      const v = document.getElementById("fCodigoManual").value.trim();
+      if (v) buscarArticulo(v, "errorManual");
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+    Auth.exigirSesion("almacen").then(s => { if (s) listarCamaras(); });
+  })();
+  </script>
+</body>
+</html>

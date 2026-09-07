@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Catálogos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Catálogos — Farmacia</h3>
+              <p class="text-muted mb-0">
+                Consulta de categorías, proveedores y tipos de movimiento. Solo lectura por ahora.
+              </p>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Categorías</h4>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead><tr><th>Código</th><th>Nombre</th></tr></thead>
+                      <tbody id="tablaCategorias"><tr><td colspan="2">Cargando...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Proveedores</h4>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead><tr><th>Código</th><th>Nombre</th></tr></thead>
+                      <tbody id="tablaProveedores"><tr><td colspan="2">Cargando...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Tipos de movimiento</h4>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead><tr><th>Nombre</th><th>Clasificación</th><th class="text-center">Signo</th></tr></thead>
+                      <tbody id="tablaTiposMovimiento"><tr><td colspan="3">Cargando...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-catalogos.js?v=1"></script>
+</body>
+</html>

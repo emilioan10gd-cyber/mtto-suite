@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Test Movimientos</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 20px auto; }
+    pre { background: #f0f0f0; padding: 10px; overflow: auto; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Test de API Movimientos</h1>
+  <button onclick="testRegistrar()">Registrar Movimiento de Prueba</button>
+  <button onclick="testListar()">Listar Movimientos</button>
+  <div id="output"></div>
+
+  <script>
+    const API_BASE_URL = "http://172.28.45.2:8081/api";
+
+    async function testRegistrar() {
+      const output = document.getElementById("output");
+      try {
+        const payload = {
+          codigoArticulo: "MT-0001",
+          tipo: "Entrada",
+          cantidad: 2,
+          responsable: "Test " + new Date().toLocaleTimeString(),
+          observaciones: "Prueba desde HTML"
+        };
+
+        console.log("Enviando:", payload);
+        const response = await fetch(API_BASE_URL + "/movimientos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          output.innerHTML = `<p class="success">✓ Registrado: ${data.folio} - Stock: ${data.stockPrevio} → ${data.stockResultante}</p>`;
+        } else {
+          output.innerHTML = `<p class="error">✗ Error: ${data.error || response.status}</p>`;
+        }
+      } catch (err) {
+        output.innerHTML = `<p class="error">✗ Excepción: ${err.message}</p>`;
+      }
+    }
+
+    async function testListar() {
+      const output = document.getElementById("output");
+      try {
+        const response = await fetch(API_BASE_URL + "/movimientos?tamano=10");
+        const data = await response.json();
+
+        let html = `<p>Total: ${data.total} movimientos</p><pre>`;
+        data.datos.forEach(m => {
+          html += `${m.folio} | ${m.fecha} | ${m.tipo} | ${m.nombreArticulo} x${m.cantidad}\n`;
+        });
+        html += "</pre>";
+        output.innerHTML = html;
+      } catch (err) {
+        output.innerHTML = `<p class="error">✗ Error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

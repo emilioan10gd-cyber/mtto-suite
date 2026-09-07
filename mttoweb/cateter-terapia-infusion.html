@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Clínica de Catéter · Terapia de Infusión</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Terapia de Infusión Intravenosa</h3>
+              <p class="text-muted mb-0">Registra datos de terapia de infusión: sitios anatómicos, calibres de catéter e intervenciones.</p>
+            </div>
+          </div>
+
+          <!-- Navegación de pestañas -->
+          <div class="row mt-3 mb-3">
+            <div class="col-12">
+              <ul class="nav nav-tabs" id="pestaniasTerapia" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link active" id="tab-registro" data-toggle="tab" href="#pestaña-registro" role="tab" aria-controls="pestaña-registro" aria-selected="true">
+                    <i class="typcn typcn-clipboard mr-2"></i>Registro de Sitios y Catéteres
+                  </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" id="tab-eventos" data-toggle="tab" href="#pestaña-eventos" role="tab" aria-controls="pestaña-eventos" aria-selected="false">
+                    <i class="typcn typcn-time mr-2"></i>Eventos Diarios
+                  </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" id="tab-reportes" data-toggle="tab" href="#pestaña-reportes" role="tab" aria-controls="pestaña-reportes" aria-selected="false">
+                    <i class="typcn typcn-chart-bar-outline mr-2"></i>Reportes
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Contenido de pestañas -->
+          <div class="tab-content" id="contenidoPestaniasTerapia">
+            <!-- PESTAÑA 1: Registro de Sitios y Catéteres -->
+            <div class="tab-pane fade show active" id="pestaña-registro" role="tabpanel" aria-labelledby="tab-registro">
+              <div class="row">
+                <div class="col-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap mb-1">
+                        <div>
+                          <h4 class="card-title mb-1">Registro de Sitios y Catéteres</h4>
+                          <p class="text-muted small mb-0">
+                            Escribe en la primera fila y presiona <kbd>Enter</kbd> (o el botón ✓):
+                            se agrega abajo al instante, como en Excel. Los totales se calculan solos.
+                          </p>
+                        </div>
+                        <!-- Selector rápido de periodo: la tabla puede crecer mucho con
+                             el tiempo, así que el historial siempre se ve por mes. -->
+                        <div class="form-inline flex-wrap" style="gap: .5rem;">
+                          <select class="form-control form-control-sm" id="selectorMesRegistro" aria-label="Mes a consultar"></select>
+                          <select class="form-control form-control-sm" id="selectorAnioRegistro" aria-label="Año a consultar"></select>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExportarRegistros">
+                            <i class="typcn typcn-download-outline mr-1" aria-hidden="true"></i>Exportar a Excel
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-center mb-0" id="tablaRegistroSitios">
+                          <thead class="thead-light">
+                            <tr>
+                              <th class="text-left" style="min-width: 110px;">Fecha</th>
+                              <th>MSD</th><th>MSI</th><th>MII</th>
+                              <th class="table-active">Tot.<br>sitios</th>
+                              <th>14</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>22</th><th>24</th>
+                              <th class="table-active">Tot.<br>catéteres</th>
+                              <th style="width: 44px;"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <!-- Fila de captura: siempre fija arriba, estilo "nueva fila" de Excel.
+                                 Escribir y dar Enter/✓ la guarda y aparece justo debajo, ya como
+                                 dato; esta fila se limpia y queda lista para la siguiente captura. -->
+                            <tr class="table-primary" id="filaCapturaRegistro">
+                              <td class="align-middle">
+                                <label for="campoFechaRegistro" class="sr-only">Fecha</label>
+                                <input type="date" class="form-control form-control-sm" id="campoFechaRegistro" required>
+                              </td>
+                              <td><label for="cantMSD" class="sr-only">Cantidad en MSD</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-sitio" id="cantMSD" data-campo="msd" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantMSI" class="sr-only">Cantidad en MSI</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-sitio" id="cantMSI" data-campo="msi" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantMII" class="sr-only">Cantidad en MII</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-sitio" id="cantMII" data-campo="mii" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td class="table-active align-middle font-weight-bold" id="totalSitios">0</td>
+                              <td><label for="cantCal14" class="sr-only">Cantidad calibre 14</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal14" data-campo="calibre_14" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal16" class="sr-only">Cantidad calibre 16</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal16" data-campo="calibre_16" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal17" class="sr-only">Cantidad calibre 17</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal17" data-campo="calibre_17" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal18" class="sr-only">Cantidad calibre 18</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal18" data-campo="calibre_18" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal19" class="sr-only">Cantidad calibre 19</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal19" data-campo="calibre_19" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal20" class="sr-only">Cantidad calibre 20</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal20" data-campo="calibre_20" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal22" class="sr-only">Cantidad calibre 22</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal22" data-campo="calibre_22" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td><label for="cantCal24" class="sr-only">Cantidad calibre 24</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-cantidad-calibre" id="cantCal24" data-campo="calibre_24" min="0" step="1" value="0" inputmode="numeric"></td>
+                              <td class="table-active align-middle font-weight-bold" id="totalCateres">0</td>
+                              <td class="align-middle">
+                                <button type="button" class="btn btn-sm btn-primary btn-icono-tabla" id="btnGuardarRegistro"
+                                        title="Agregar fila (Enter)" aria-label="Agregar fila a la tabla">
+                                  <i class="typcn typcn-tick" aria-hidden="true"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tbody id="tablaHistorialRegistros">
+                            <tr class="fila-vacia-historial"><td colspan="15" class="text-center text-muted small">Cargando…</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="small text-danger mt-2 d-none" id="errorRegistro" role="alert"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PESTAÑA 2: Eventos Diarios -->
+            <div class="tab-pane fade" id="pestaña-eventos" role="tabpanel" aria-labelledby="tab-eventos">
+              <div class="row">
+                <div class="col-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap mb-1">
+                        <div>
+                          <h4 class="card-title mb-1">Registro de Eventos Diarios</h4>
+                          <p class="text-muted small mb-0">
+                            Escribe en la primera fila y presiona <kbd>Enter</kbd> (o el botón ✓):
+                            se agrega abajo al instante, como en Excel.
+                          </p>
+                        </div>
+                        <div class="form-inline flex-wrap" style="gap: .5rem;">
+                          <select class="form-control form-control-sm" id="selectorMesEvento" aria-label="Mes a consultar"></select>
+                          <select class="form-control form-control-sm" id="selectorAnioEvento" aria-label="Año a consultar"></select>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" id="btnExportarEventos">
+                            <i class="typcn typcn-download-outline mr-1" aria-hidden="true"></i>Exportar a Excel
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-center mb-0" id="tablaRegistroEventos">
+                          <thead class="thead-light">
+                            <tr>
+                              <th class="text-left" style="min-width: 110px;">Fecha</th>
+                              <th>Total<br>eventos</th>
+                              <th>Catéteres<br>colocados</th>
+                              <th>Personas que<br>instalaron</th>
+                              <th>Total<br>intervenciones</th>
+                              <th style="width: 44px;"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <!-- Fila de captura: fija arriba, igual que en Registro de
+                                 Sitios y Catéteres. -->
+                            <tr class="table-primary" id="filaCapturaEvento">
+                              <td class="align-middle">
+                                <label for="campoFecha" class="sr-only">Fecha</label>
+                                <input type="date" class="form-control form-control-sm" id="campoFecha" required>
+                              </td>
+                              <td>
+                                <label for="campoTotalEventos" class="sr-only">Total de eventos</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-evento" id="campoTotalEventos" data-campo="totalEventos" min="0" step="1" value="0" inputmode="numeric">
+                              </td>
+                              <td>
+                                <label for="campoTotalCateterColocados" class="sr-only">Catéteres colocados</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-evento" id="campoTotalCateterColocados" data-campo="totalCateterColocados" min="0" step="1" value="0" inputmode="numeric">
+                              </td>
+                              <td>
+                                <label for="campoPersonasInstalaron" class="sr-only">Personas que instalaron</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-evento" id="campoPersonasInstalaron" data-campo="personasInstalaron" min="0" step="1" value="0" inputmode="numeric">
+                              </td>
+                              <td>
+                                <label for="campoTotalIntervenciones" class="sr-only">Total de intervenciones</label>
+                                <input type="number" class="form-control form-control-sm text-center celda-evento" id="campoTotalIntervenciones" data-campo="totalIntervenciones" min="0" step="1" value="0" inputmode="numeric">
+                              </td>
+                              <td class="align-middle">
+                                <button type="button" class="btn btn-sm btn-primary btn-icono-tabla" id="btnGuardarEventos"
+                                        title="Agregar fila (Enter)" aria-label="Agregar fila a la tabla">
+                                  <i class="typcn typcn-tick" aria-hidden="true"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tbody id="tablaEventosGuardados">
+                            <tr class="fila-vacia"><td colspan="6" class="text-center text-muted small">Cargando…</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="small text-danger mt-2 d-none" id="errorEvento" role="alert"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PESTAÑA 3: Reportes -->
+            <div class="tab-pane fade" id="pestaña-reportes" role="tabpanel" aria-labelledby="tab-reportes">
+              <div class="row">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                    <div>
+                      <h4 class="mb-1">Reportes</h4>
+                      <p class="text-muted small mb-0">Tendencia de sitios, catéteres y eventos capturados.</p>
+                    </div>
+                    <div class="form-inline flex-wrap" style="gap: .5rem;">
+                      <select class="form-control form-control-sm" id="selectorAnioReportes" aria-label="Año a consultar"></select>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnActualizarReportes">
+                        <i class="typcn typcn-refresh mr-1" aria-hidden="true"></i>Actualizar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- KPIs del periodo -->
+              <div class="row" id="filaKpisReportes">
+                <div class="col-md-3 grid-margin stretch-card">
+                  <div class="card"><div class="card-body py-3">
+                    <p class="text-muted small mb-1">Total de sitios</p>
+                    <h3 class="mb-0" id="kpiTotalSitios">0</h3>
+                  </div></div>
+                </div>
+                <div class="col-md-3 grid-margin stretch-card">
+                  <div class="card"><div class="card-body py-3">
+                    <p class="text-muted small mb-1">Total de catéteres</p>
+                    <h3 class="mb-0" id="kpiTotalCateteres">0</h3>
+                  </div></div>
+                </div>
+                <div class="col-md-3 grid-margin stretch-card">
+                  <div class="card"><div class="card-body py-3">
+                    <p class="text-muted small mb-1">Total de eventos</p>
+                    <h3 class="mb-0" id="kpiTotalEventos">0</h3>
+                  </div></div>
+                </div>
+                <div class="col-md-3 grid-margin stretch-card">
+                  <div class="card"><div class="card-body py-3">
+                    <p class="text-muted small mb-1">Total de intervenciones</p>
+                    <h3 class="mb-0" id="kpiTotalIntervenciones">0</h3>
+                  </div></div>
+                </div>
+              </div>
+
+              <!-- Tendencia en el tiempo -->
+              <div class="row">
+                <div class="col-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">Eventos diarios en el tiempo</h5>
+                      <div style="position: relative; height: 280px;">
+                        <canvas id="graficaEventosTiempo"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">Sitios y catéteres capturados en el tiempo</h5>
+                      <div style="position: relative; height: 280px;">
+                        <canvas id="graficaSitiosCateteresTiempo"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Distribución -->
+              <div class="row">
+                <div class="col-lg-6 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">Catéteres por sitio anatómico</h5>
+                      <div style="position: relative; height: 240px;">
+                        <canvas id="graficaPorSitio"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">Catéteres por calibre</h5>
+                      <div style="position: relative; height: 240px;">
+                        <canvas id="graficaPorCalibre"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-muted small text-center" id="mensajeSinDatosReportes" style="display: none;">
+                No hay datos capturados en el periodo seleccionado.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("cateter");</script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/cateter-api.js?v=18"></script>
+  <script src="js/cateter-terapia-infusion.js?v=22"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Insumos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Insumos — Biomédico</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-12 grid-margin">
+              <div class="card"><div class="card-body">
+                <div class="d-flex flex-wrap align-items-center" style="gap:10px;">
+                  <input type="text" class="form-control" id="fBusqueda" placeholder="Buscar por clave o nombre..." style="max-width:260px;">
+                  <select class="form-control" id="fCategoria" style="max-width:220px;"><option value="">Todas las categorías</option></select>
+                  <div class="form-check ml-2">
+                    <input class="form-check-input" type="checkbox" id="fBajoMinimo">
+                    <label class="form-check-label" for="fBajoMinimo">Solo bajo mínimo</label>
+                  </div>
+                  <div class="flex-grow-1"></div>
+                  <button type="button" class="btn btn-outline-primary" id="btnMovimiento"><i class="typcn typcn-arrow-repeat"></i> Registrar movimiento</button>
+                  <button type="button" class="btn btn-primary" id="btnNuevo"><i class="typcn typcn-plus"></i> Agregar insumo</button>
+                </div>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead><tr>
+                      <th>Clave</th><th>Nombre</th><th>Categoría</th><th>Existencia</th>
+                      <th>Mínimo</th><th>Caducidad próxima</th><th></th>
+                    </tr></thead>
+                    <tbody id="tablaInsumos"><tr><td colspan="7">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalInsumo" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Agregar / editar insumo</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorInsumo"></div>
+                  <div class="form-group">
+                    <label>Clave *</label>
+                    <input type="text" class="form-control" id="fClave" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Nombre *</label>
+                    <input type="text" class="form-control" id="fNombre" required>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Categoría</label>
+                      <input type="text" class="form-control" id="fCategoriaInput" list="listaCategoriasInsumo">
+                      <datalist id="listaCategoriasInsumo"></datalist>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Unidad</label>
+                      <input type="text" class="form-control" id="fUnidad" value="Pieza">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Stock mínimo</label>
+                      <input type="number" step="0.001" class="form-control" id="fStockMinimo" value="0">
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Stock máximo</label>
+                      <input type="number" step="0.001" class="form-control" id="fStockMaximo">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarInsumo">Guardar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalMovimiento" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Registrar movimiento</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorMovimiento"></div>
+
+                  <div class="form-group">
+                    <label>Clave del insumo *</label>
+                    <input type="text" class="form-control" id="mClave" list="listaClaves" required>
+                    <datalist id="listaClaves"></datalist>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Tipo *</label>
+                      <select class="form-control" id="mTipo">
+                        <option value="Entrada">Entrada</option>
+                        <option value="Salida">Salida</option>
+                        <option value="Ajuste (+)">Ajuste (+)</option>
+                        <option value="Ajuste (-)">Ajuste (-)</option>
+                      </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Cantidad *</label>
+                      <input type="number" step="0.001" class="form-control" id="mCantidad" required>
+                    </div>
+                  </div>
+
+                  <hr class="my-3">
+
+                  <div class="form-check mb-3">
+                    <label class="form-check-label font-weight-bold" for="mContieneLote">¿Contiene lote?</label>
+                    <input class="form-check-input" type="checkbox" id="mContieneLote">
+                  </div>
+
+                  <div id="seccionLote" style="display: none; background-color: #f8f9fa; padding: 12px; border-radius: 4px; border-left: 3px solid #0066cc;">
+                    <div class="form-group mb-3">
+                      <label>Lote <small class="text-muted">(vacío = FEFO automático en salidas)</small></label>
+                      <input type="text" class="form-control" id="mLote">
+                    </div>
+
+                    <div class="form-check mb-3">
+                      <label class="form-check-label font-weight-bold" for="mTieneFecha">¿Tiene fecha de vencimiento?</label>
+                      <input class="form-check-input" type="checkbox" id="mTieneFecha">
+                    </div>
+
+                    <div id="seccionCaducidad" style="display: none;">
+                      <div class="form-group">
+                        <label>Fecha de vencimiento</label>
+                        <input type="date" class="form-control" id="mCaducidad">
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr class="my-3">
+
+                  <div class="form-group">
+                    <label>Responsable</label>
+                    <input type="text" class="form-control" id="mResponsable">
+                  </div>
+                  <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea class="form-control" id="mObservaciones" rows="2"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarMovimiento">Registrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalLotes" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Lotes</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <table class="table table-sm">
+                    <thead><tr><th>Lote</th><th>Caducidad</th><th>Existencia</th><th>Estado</th></tr></thead>
+                    <tbody id="tablaLotes"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-insumos.js?v=1"></script>
+</body>
+</html>

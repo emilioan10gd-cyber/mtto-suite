@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Iniciar sesión</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f6fa;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card login-card">
+    <div class="card-body">
+      <div class="text-center mb-4">
+        <span class="mtto-brand" style="font-size: 1.6rem;">HOSPITAL GENERAL REYNOSA</span>
+       </p> <span class="mtto-brand" style="font-size: 1.2rem;">JOSE MARIA GARZA CANTUS</span></p>
+        <p class="text-muted small mt-1 mb-0">ALMACEN</p>
+      </div>
+
+      <form id="formLogin">
+        <div class="form-group">
+          <label class="small">Usuario o correo</label>
+          <input type="text" class="form-control" id="campoUsuario" required autocomplete="username" autofocus>
+        </div>
+        <div class="form-group">
+          <label class="small">Contraseña</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="campoPassword" required autocomplete="current-password">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" id="btnTogglePassword" title="Mostrar/ocultar contraseña">
+                <i class="typcn typcn-eye" id="iconoOjo"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-danger alert-sm d-none" id="errorLogin"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="btnLogin">
+          Iniciar sesión
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/auth.js?v=14"></script>
+  <script>
+    (function () {
+      // Botón mostrar/ocultar contraseña
+      const inputPassword = document.getElementById("campoPassword");
+      const btnToggle = document.getElementById("btnTogglePassword");
+
+      btnToggle.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const tipo = inputPassword.type === "password" ? "text" : "password";
+        inputPassword.type = tipo;
+        btnToggle.querySelector("i").classList.toggle("typcn-eye");
+        btnToggle.querySelector("i").classList.toggle("typcn-eye-open");
+      });
+
+      // Si ya hay sesión válida, no tiene caso mostrar el login: se manda
+      // directo a su módulo. exigirSesion(null) no exige un área en
+      // particular y redirige a login sola si el token no es válido; si SÍ
+      // es válida, hay que mandar a su módulo a mano.
+      (async () => {
+        if (Auth.token()) {
+          const sesion = await Auth.exigirSesion(null).catch(() => null);
+          if (sesion) window.location.href = Auth.paginaInicio(sesion.area);
+        }
+      })();
+
+      document.getElementById("formLogin").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const errorBox = document.getElementById("errorLogin");
+        const boton = document.getElementById("btnLogin");
+        errorBox.classList.add("d-none");
+        boton.disabled = true;
+        boton.textContent = "Entrando...";
+
+        try {
+          const sesion = await Auth.login(
+            document.getElementById("campoUsuario").value.trim(),
+            document.getElementById("campoPassword").value
+          );
+          window.location.href = Auth.paginaInicio(sesion.area);
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.classList.remove("d-none");
+          boton.disabled = false;
+          boton.textContent = "Iniciar sesión";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

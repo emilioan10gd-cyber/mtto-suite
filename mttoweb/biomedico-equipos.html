@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Equipos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Equipos — Biomédico</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-12 grid-margin">
+              <div class="card"><div class="card-body">
+                <div class="d-flex flex-wrap align-items-center" style="gap:10px;">
+                  <input type="text" class="form-control" id="fBusqueda" placeholder="Buscar por nombre, marca, serie..." style="max-width:260px;">
+                  <select class="form-control" id="fArea" style="max-width:200px;"><option value="">Todas las áreas</option></select>
+                  <select class="form-control" id="fCategoria" style="max-width:200px;"><option value="">Todas las categorías</option></select>
+                  <select class="form-control" id="fEstado" style="max-width:200px;"><option value="">Todos los estados</option></select>
+                  <div class="flex-grow-1"></div>
+                  <a class="btn btn-outline-secondary" id="btnExportar" href="#" target="_blank"><i class="typcn typcn-download"></i> Exportar</a>
+                  <button type="button" class="btn btn-primary" id="btnNuevo"><i class="typcn typcn-plus"></i> Agregar equipo</button>
+                </div>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead><tr>
+                      <th>Área</th><th>Equipo</th><th>Marca / Modelo</th><th>N.º Serie</th>
+                      <th>Estado</th><th>Ubicación</th><th>Mantenimiento</th><th></th>
+                    </tr></thead>
+                    <tbody id="tablaEquipos"><tr><td colspan="8">Cargando...</td></tr></tbody>
+                  </table>
+                </div>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalEquipo" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="modalEquipoTitulo">Agregar equipo</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorEquipo"></div>
+                  <form id="formEquipo">
+                    <input type="hidden" id="fEquipoId">
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label>Nombre del equipo *</label>
+                        <input type="text" class="form-control" id="fNombre" required>
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label>Área *</label>
+                        <input type="text" class="form-control" id="fAreaInput" list="listaAreas" required>
+                        <datalist id="listaAreas"></datalist>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label>Categoría</label>
+                        <input type="text" class="form-control" id="fCategoriaInput" list="listaCategorias">
+                        <datalist id="listaCategorias"></datalist>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label>Marca</label>
+                        <input type="text" class="form-control" id="fMarca">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label>Modelo</label>
+                        <input type="text" class="form-control" id="fModelo">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label>Número de serie</label>
+                        <input type="text" class="form-control" id="fSerie">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label>Ubicación</label>
+                        <input type="text" class="form-control" id="fUbicacion" placeholder="Cama 01, Sala 2...">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label>Fecha de adquisición</label>
+                        <input type="date" class="form-control" id="fFechaAdq">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>Descripción / comentarios</label>
+                      <textarea class="form-control" id="fComentarios" rows="2"></textarea>
+                    </div>
+                  </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="btnGuardarEquipo">Guardar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal fade" id="modalBaja" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Dar de baja equipo</h5>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger d-none" id="errorBaja"></div>
+                  <input type="hidden" id="bajaEquipoId">
+                  <div class="form-group">
+                    <label>Motivo de la baja *</label>
+                    <textarea class="form-control" id="bajaMotivo" rows="3" required></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-danger" id="btnConfirmarBaja">Dar de baja</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-inventario.js?v=1"></script>
+</body>
+</html>

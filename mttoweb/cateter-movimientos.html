@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Clínica de Catéter · Movimientos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Movimientos — Clínica de Catéter</h3>
+              <p class="text-muted mb-0">
+                Registra un movimiento sin tener que buscar antes el artículo en Inventario. Útil el
+                día que alguien más de la clínica necesite mover existencias directamente.
+              </p>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <!-- Navegación de pestañas -->
+          <div class="row mt-3 mb-3">
+            <div class="col-12">
+              <ul class="nav nav-tabs" id="pestaniasMovimientos" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link active" id="tab-movimientos" data-toggle="tab" href="#pestaña-movimientos" role="tab" aria-controls="pestaña-movimientos" aria-selected="true">
+                    <i class="typcn typcn-shopping-cart mr-2"></i>Movimientos
+                  </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" id="tab-historial" data-toggle="tab" href="#pestaña-historial" role="tab" aria-controls="pestaña-historial" aria-selected="false">
+                    <i class="typcn typcn-time mr-2"></i>Historial de Movimientos
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Contenido de pestañas -->
+          <div class="tab-content" id="contenidoPestanias">
+            <!-- PESTAÑA 1: Movimientos -->
+            <div class="tab-pane fade show active" id="pestaña-movimientos" role="tabpanel" aria-labelledby="tab-movimientos">
+              <div class="row">
+                <!-- Formulario: horizontal, a lo ancho de la pantalla, en vez
+                     de una columna angosta con los campos apilados. -->
+                <div class="col-lg-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h4 class="card-title mb-3">Registrar movimiento</h4>
+                      <div class="alert alert-danger d-none" id="errorMovimiento" role="alert"></div>
+                      <div class="alert alert-success d-none" id="exitoMovimiento" role="alert"></div>
+                      <!-- form-row envuelve en varias líneas si no cabe: cada
+                           columna tiene el ancho mínimo para no truncar texto
+                           ("Almacén", "Agregar a la lista"). Sin align-items-end:
+                           así el texto de ayuda del lote no desalinea las demás
+                           etiquetas de la fila. -->
+                      <form id="formMovimiento" class="form-row">
+                        <div class="form-group col-md-6 col-lg-3">
+                          <label for="campoClave">Clave *</label>
+                          <!-- input + datalist: se puede escribir clave o nombre, y
+                               recibe tal cual lo que teclee un lector de código de barras. -->
+                          <input class="form-control" id="campoClave" list="listaClaves" required
+                                 autocomplete="off" placeholder="Escanea, clave o nombre…">
+                          <datalist id="listaClaves"></datalist>
+                          <small class="form-text text-muted" id="claveElegida">&nbsp;</small>
+                        </div>
+                        <div class="form-group col-md-6 col-lg-3">
+                          <label for="campoTipo">Tipo de movimiento *</label>
+                          <select class="form-control" id="campoTipo" required>
+                            <option value="Traslado a stock">Traslado a stock</option>
+                            <option value="Retorno a almacén">Retorno a almacén</option>
+                            <option value="Salida">Salida (uso en paciente)</option>
+                            <option value="Merma">Merma (caducado / dañado)</option>
+                            <option value="Ajuste (+)">Ajuste (+)</option>
+                            <option value="Ajuste (-)">Ajuste (-)</option>
+                          </select>
+                        </div>
+                        <div class="form-group col-md-6 col-lg-3 d-none" id="grupoLote">
+                          <label for="campoLote">Lote *</label>
+                          <select class="form-control" id="campoLote"></select>
+                          <small class="form-text text-muted">Se preselecciona el más próximo a caducar (FEFO).</small>
+                        </div>
+                        <div class="form-group col-md-6 col-lg-3" id="grupoOrigen">
+                          <label for="campoOrigen">Ubicación origen *</label>
+                          <select class="form-control" id="campoOrigen">
+                            <option value="Almacén">Almacén</option>
+                            <option value="Stock" selected>Stock</option>
+                          </select>
+                        </div>
+                        <div class="form-group col-md-6 col-lg-3 d-none" id="grupoDestino">
+                          <label for="campoDestino">Ubicación destino *</label>
+                          <select class="form-control" id="campoDestino">
+                            <option value="Stock" selected>Stock</option>
+                            <option value="Almacén">Almacén</option>
+                          </select>
+                        </div>
+                        <div class="form-group col-md-3 col-lg-2" id="grupoCantidad">
+                          <label for="campoCantidad">Cantidad *</label>
+                          <input type="number" step="0.001" min="0.001" class="form-control" id="campoCantidad" required>
+                        </div>
+                        <div class="form-group col-md-5 col-lg-3 d-none" id="grupoReferencia">
+                          <label for="campoReferencia">Referencia de uso</label>
+                          <input type="text" class="form-control" id="campoReferencia" maxlength="120"
+                                 placeholder="Nota opcional">
+                        </div>
+                        <div class="form-group col-md-4 col-lg-3">
+                          <label for="campoResponsable">Responsable</label>
+                          <input type="text" class="form-control" id="campoResponsable" maxlength="120">
+                        </div>
+                        <div class="form-group col-md-6 col-lg-3">
+                          <label for="campoObservaciones">Observaciones</label>
+                          <input type="text" class="form-control" id="campoObservaciones" maxlength="500">
+                        </div>
+                        <!-- La acción va en su propia barra, no como una columna
+                             más: dentro del grid quedaba sola en un renglón y el
+                             texto del botón se partía al angostarse. -->
+                        <div class="col-12 d-flex justify-content-end border-top pt-3 mt-2">
+                          <button type="submit" class="btn btn-primary text-nowrap px-4">
+                            <i class="typcn typcn-plus mr-1"></i>Agregar a la lista
+                          </button>
+                        </div>
+                      </form>
+
+                      <!-- Mensajes de estado -->
+                      <div class="alert alert-danger d-none mt-3" id="errorAgregando" role="alert"></div>
+                      <div class="alert alert-success d-none mt-3" id="exitoAgregando" role="alert"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cola de movimientos pendientes -->
+                <div class="col-lg-12 grid-margin stretch-card" id="seccionCola" style="display: none;">
+                  <div class="card">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                        <div>
+                          <h4 class="card-title mb-1">
+                            Movimientos pendientes
+                            <span class="badge badge-info ml-1" id="contadorCola">0</span>
+                          </h4>
+                          <p class="text-muted small mb-0">
+                            Todavía no se guardan. Revísalos y confirma con «Guardar todos».
+                          </p>
+                        </div>
+                        <span class="small text-muted" id="resumenCola"></span>
+                      </div>
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                          <thead class="thead-light">
+                            <tr>
+                              <th>Tipo</th>
+                              <th>Clave</th>
+                              <th class="text-right">Cantidad</th>
+                              <th>Origen</th>
+                              <th>Destino</th>
+                              <th>Referencia</th>
+                              <th>Observaciones</th>
+                              <th class="text-center" style="width: 60px;">Quitar</th>
+                            </tr>
+                          </thead>
+                          <tbody id="tablaMovimientosPendientes">
+                          </tbody>
+                        </table>
+                      </div>
+                      <!-- Acción primaria (guardar) a la derecha y la destructiva
+                           en outline: la jerarquía evita el clic accidental. -->
+                      <div class="d-flex justify-content-end align-items-center border-top pt-3 mt-3">
+                        <button type="button" class="btn btn-outline-secondary mr-2" id="btnLimpiarCola">
+                          <i class="typcn typcn-trash mr-1" aria-hidden="true"></i>Limpiar todo
+                        </button>
+                        <button type="button" class="btn btn-primary px-4" id="btnGuardarTodos">
+                          <i class="typcn typcn-input-checked mr-1" aria-hidden="true"></i>Guardar todos
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PESTAÑA 2: Historial de Movimientos -->
+            <div class="tab-pane fade" id="pestaña-historial" role="tabpanel" aria-labelledby="tab-historial">
+              <div class="row">
+                <div class="col-12 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h4 class="card-title mb-3">Historial de Movimientos</h4>
+                      <p class="text-muted small mb-3">Visualiza y filtra todos los movimientos realizados para auditoría y trazabilidad completa de artículos.</p>
+
+                      <!-- Filtros -->
+                      <div class="card bg-light mb-3">
+                        <div class="card-body">
+                          <h6 class="card-title">Filtros de búsqueda</h6>
+                          <div class="form-row align-items-end">
+                            <div class="form-group col-md-2 mb-0">
+                              <label class="small mb-1">Clave</label>
+                              <input type="text" class="form-control form-control-sm" id="filtroClave" placeholder="Todas">
+                            </div>
+                            <div class="form-group col-md-2 mb-0">
+                              <label class="small mb-1">Tipo de movimiento</label>
+                              <select class="form-control form-control-sm" id="filtroTipo">
+                                <option value="">Todos los tipos</option>
+                                <option value="Entrada">Entrada</option>
+                                <option value="Traslado a stock">Traslado a stock</option>
+                                <option value="Retorno a almacén">Retorno a almacén</option>
+                                <option value="Salida">Salida</option>
+                                <option value="Merma">Merma</option>
+                                <option value="Ajuste (+)">Ajuste (+)</option>
+                                <option value="Ajuste (-)">Ajuste (-)</option>
+                              </select>
+                            </div>
+                            <div class="form-group col-md-2 mb-0">
+                              <label class="small mb-1">Responsable</label>
+                              <input type="text" class="form-control form-control-sm" id="filtroResponsable" placeholder="Todos">
+                            </div>
+                            <div class="form-group col-md-2 mb-0">
+                              <label class="small mb-1">Estado</label>
+                              <select class="form-control form-control-sm" id="filtroEstado">
+                                <option value="">Todos</option>
+                                <option value="Activo" selected>Activos</option>
+                                <option value="Cancelado">Cancelados</option>
+                              </select>
+                            </div>
+                            <div class="form-group col-md-2 mb-0">
+                              <button type="button" class="btn btn-sm btn-primary btn-block" id="btnBuscarBitacora">
+                                <i class="typcn typcn-zoom mr-1"></i>Buscar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Tabla de historial -->
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                          <thead>
+                            <tr>
+                              <th>Folio</th>
+                              <th>Fecha</th>
+                              <th>Tipo</th>
+                              <th>Clave</th>
+                              <th>Lote</th>
+                              <th class="text-right">Cantidad</th>
+                              <th>Origen</th>
+                              <th>Destino</th>
+                              <th>Responsable</th>
+                              <th>Observaciones</th>
+                              <th class="text-center" style="width: 80px;">Estado</th>
+                              <th class="text-center" style="width: 60px;">Acción</th>
+                            </tr>
+                          </thead>
+                          <tbody id="tablaMovimientos">
+                            <tr><td colspan="12" class="text-center">Cargando...</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <!-- Paginación -->
+                      <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="small text-muted" id="bitacoraResumen"></span>
+                        <div>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" id="bitacoraAnterior">
+                            <i class="typcn typcn-arrow-left mr-1"></i>Anterior
+                          </button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary" id="bitacoraSiguiente">
+                            Siguiente<i class="typcn typcn-arrow-right ml-1"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- Modal: Cancelar movimiento -->
+  <div class="modal fade" id="modalCancelarMovimiento" tabindex="-1" role="dialog" aria-labelledby="labelModalCancelar" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="labelModalCancelar">Cancelar Movimiento</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-3">
+            <strong>Folio:</strong> <span id="modalFolio"></span><br>
+            <strong>Artículo:</strong> <span id="modalArticulo"></span><br>
+            <strong>Cantidad:</strong> <span id="modalCantidad"></span>
+          </p>
+          <div class="form-group">
+            <label>Razón de cancelación (opcional)</label>
+            <textarea class="form-control" id="modalRazon" maxlength="500" rows="3" placeholder="Ej: Error en cantidad, artículo incorrecto, etc."></textarea>
+            <small class="form-text text-muted">Se guardará en el historial de auditoría.</small>
+          </div>
+          <div class="alert alert-warning small" role="alert">
+            <i class="typcn typcn-warning-outline mr-1"></i>
+            Esta acción marcará el movimiento como cancelado. No se eliminará del historial, quedará registrado para auditoría.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No, cancelar</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmarCancelacion">
+            <i class="typcn typcn-trash mr-1"></i>Sí, cancelar movimiento
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("cateter");</script>
+  <script src="js/cateter-api.js?v=17"></script>
+  <script src="js/cateter-movimientos.js?v=16"></script>
+</body>
+</html>

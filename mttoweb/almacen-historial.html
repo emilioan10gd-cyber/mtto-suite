@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Historial de transacciones</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    .h-clave  { font-family: monospace; font-size:.75rem; color:#5b4fcf; font-weight:700; white-space:nowrap; }
+    .h-nombre { font-size:.78rem; line-height:1.25; max-width:260px; }
+    .h-filtros { border:none; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    #histTabla td { vertical-align: middle; }
+    #histTabla th { white-space: nowrap; font-size:.78rem; }
+
+    /* Franja por tipo, para leer la tabla de un vistazo */
+    tr.t-Entrada       { border-left:3px solid #1ca85c; }
+    tr.t-Salida        { border-left:3px solid #2b7cd3; }
+    tr.t-Merma         { border-left:3px solid #c0392b; }
+    tr.t-Transferencia { border-left:3px solid #5b4fcf; }
+    tr.t-Ajuste        { border-left:3px solid #6c757d; }
+
+    .h-count-pill { background:#5b4fcf; color:#fff; border-radius:12px; padding:1px 10px; font-size:.8rem; }
+    .h-cad-vencido { color:#c0392b; font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <!-- Sidebar -->
+      <div id="sidebarInyectado"></div>
+      <!-- /Sidebar -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <h3 class="mb-0 font-weight-bold mr-2">Historial de transacciones</h3>
+              <span class="h-count-pill" id="pillTotal">—</span>
+            </div>
+            <button type="button" class="btn btn-outline-secondary" id="btnExportar">
+              <i class="typcn typcn-download mr-1"></i>Exportar
+            </button>
+          </div>
+
+          <!-- Filtros -->
+          <div class="card mb-3 h-filtros">
+            <div class="card-body py-2 px-3">
+              <div class="form-row align-items-end">
+                <div class="col-md-3 mb-2">
+                  <label class="small mb-1">Buscar</label>
+                  <input type="search" class="form-control form-control-sm" id="fQ"
+                         placeholder="Clave, artículo o lote... (o escanea)">
+                </div>
+                <div class="col-md-2 mb-2">
+                  <label class="small mb-1">Tipo</label>
+                  <select class="form-control form-control-sm" id="fTipo">
+                    <option value="">Todos</option>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Salida">Salida</option>
+                    <option value="Merma">Merma</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Ajuste">Ajuste</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                  <label class="small mb-1">Área</label>
+                  <input type="text" class="form-control form-control-sm" id="fArea"
+                         list="listaAreas" placeholder="Todas" autocomplete="off">
+                  <datalist id="listaAreas"></datalist>
+                </div>
+                <div class="col-md-2 mb-2">
+                  <label class="small mb-1">Entregado a</label>
+                  <input type="text" class="form-control form-control-sm" id="fEntregadoA"
+                         list="listaReceptores" placeholder="Cualquiera" autocomplete="off">
+                  <datalist id="listaReceptores"></datalist>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <div class="form-row">
+                    <div class="col-6">
+                      <label class="small mb-1">Desde</label>
+                      <input type="date" class="form-control form-control-sm" id="fDesde">
+                    </div>
+                    <div class="col-6">
+                      <label class="small mb-1">Hasta</label>
+                      <input type="date" class="form-control form-control-sm" id="fHasta">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="btn btn-outline-secondary" data-rango="hoy">Hoy</button>
+                  <button type="button" class="btn btn-outline-secondary" data-rango="semana">7 días</button>
+                  <button type="button" class="btn btn-outline-secondary" data-rango="mes">Este mes</button>
+                  <button type="button" class="btn btn-outline-secondary" data-rango="todo">Todo</button>
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary mr-1" id="btnLimpiar">Limpiar</button>
+                  <button class="btn btn-sm btn-primary" id="btnBuscar">Buscar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen del filtro actual -->
+          <div class="row mb-3" id="resumenCards">
+            <div class="col-6 col-md-3 mb-2">
+              <div class="card"><div class="card-body py-2 px-3">
+                <div class="text-muted small">Movimientos</div>
+                <div class="h4 mb-0 font-weight-bold" id="kpiMovs">—</div>
+              </div></div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="card"><div class="card-body py-2 px-3">
+                <div class="text-muted small">Piezas entradas</div>
+                <div class="h4 mb-0 font-weight-bold text-success" id="kpiEntradas">—</div>
+              </div></div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="card"><div class="card-body py-2 px-3">
+                <div class="text-muted small">Piezas salidas</div>
+                <div class="h4 mb-0 font-weight-bold text-primary" id="kpiSalidas">—</div>
+              </div></div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="card"><div class="card-body py-2 px-3">
+                <div class="text-muted small">Piezas merma</div>
+                <div class="h4 mb-0 font-weight-bold text-danger" id="kpiMermas">—</div>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="histTabla">
+                  <thead class="bg-light">
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Clave</th>
+                      <th>Artículo</th>
+                      <th>Lote</th>
+                      <th>Caducidad</th>
+                      <th class="text-right">Cant.</th>
+                      <th>Entregado a / Proveedor</th>
+                      <th>Área</th>
+                      <th>Programa</th>
+                      <th>Vale</th>
+                      <th>Usuario</th>
+                    </tr>
+                  </thead>
+                  <tbody id="histBody">
+                    <tr><td colspan="12" class="text-muted text-center py-3">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card-body py-2 d-flex justify-content-between align-items-center">
+              <span class="text-muted small" id="infoTotal">—</span>
+              <div>
+                <button class="btn btn-sm btn-outline-secondary" id="btnAnterior">&#8592;</button>
+                <span class="small mx-2" id="pagInfo">—</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btnSiguiente">&#8594;</button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content-wrapper -->
+        <footer class="footer"><span class="text-muted text-sm-left">Almacén Central · HGR Reynosa</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    const fmtFecha = (s) => s ? new Date(s).toLocaleDateString("es-MX") : "—";
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const $ = (id) => document.getElementById(id);
+
+    const TIPO_BADGE = {
+      Entrada: "badge-success", Salida: "badge-primary", Merma: "badge-danger",
+      Ajuste: "badge-warning", Transferencia: "badge-info"
+    };
+
+    const estado = { pagina: 1, tamano: 60, totalPaginas: 1 };
+    let areasConocidas = [];
+
+    const hoyISO = () => new Date().toISOString().slice(0, 10);
+
+    // Los filtros vacíos no se mandan: el backend los trata como "sin filtro".
+    function filtros() {
+      return {
+        q:          $("fQ").value.trim() || undefined,
+        tipo:       $("fTipo").value || undefined,
+        area:       $("fArea").value.trim() || undefined,
+        entregadoA: $("fEntregadoA").value.trim() || undefined,
+        desde:      $("fDesde").value || undefined,
+        hasta:      $("fHasta").value || undefined
+      };
+    }
+
+    async function cargar() {
+      $("histBody").innerHTML = '<tr><td colspan="12" class="text-muted text-center py-3">Cargando...</td></tr>';
+      try {
+        const data = await AlmacenApi.movimientos.listar(
+          Object.assign({}, filtros(), { pagina: estado.pagina, tamano: estado.tamano }));
+
+        const filas = data.datos || [];
+        estado.totalPaginas = data.totalPaginas || 1;
+
+        $("histBody").innerHTML = filas.length
+          ? filas.map(m => {
+              const vencido = m.caducidad && new Date(m.caducidad) < new Date();
+              return `<tr class="t-${esc(m.tipo)}">
+                <td class="small">${fmtFecha(m.fecha)}</td>
+                <td><span class="badge ${TIPO_BADGE[m.tipo] || "badge-secondary"}">${esc(m.tipo)}</span></td>
+                <td class="h-clave">${esc(m.clave)}</td>
+                <td class="h-nombre">${esc(m.nombre)}</td>
+                <td class="small">${esc(m.lote || "—")}</td>
+                <td class="small ${vencido ? "h-cad-vencido" : ""}">${fmtFecha(m.caducidad)}</td>
+                <td class="text-right font-weight-bold">${fmt(m.cantidad)}</td>
+                <td class="small">${m.tipo === "Entrada"
+                  ? (esc(m.proveedor || "—") + (m.proveedor ? ' <span class="text-muted">(proveedor)</span>' : ""))
+                  : esc(m.entregadoA || "—")}</td>
+                <td class="small">${m.tipo === "Entrada"
+                  ? esc(m.ordenSuministro || "—")
+                  : esc(m.areaDestino || "—")}</td>
+                <td class="small">${esc(m.programa || "—")}</td>
+                <td class="small">${esc(m.vale || "—")}</td>
+                <td class="small">${esc(m.usuario || "—")}</td>
+              </tr>`;
+            }).join("")
+          : '<tr><td colspan="12" class="text-muted text-center py-3">No hay movimientos con esos filtros</td></tr>';
+
+        $("pillTotal").textContent = fmt(data.total) + (data.total === 1 ? " movimiento" : " movimientos");
+        $("infoTotal").textContent = filas.length
+          ? `Mostrando ${fmt(filas.length)} de ${fmt(data.total)}`
+          : "Sin resultados";
+        $("pagInfo").textContent = `${data.pagina} / ${estado.totalPaginas}`;
+        $("btnAnterior").disabled  = data.pagina <= 1;
+        $("btnSiguiente").disabled = data.pagina >= estado.totalPaginas;
+
+        await cargarResumen();
+      } catch (err) {
+        $("histBody").innerHTML =
+          `<tr><td colspan="12" class="text-danger text-center py-3">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // El resumen es del filtro completo, no solo de la página visible, así que
+    // se pide aparte con un tamaño grande y se suma en el cliente.
+    async function cargarResumen() {
+      try {
+        const data = await AlmacenApi.movimientos.listar(
+          Object.assign({}, filtros(), { pagina: 1, tamano: 500 }));
+        const filas = data.datos || [];
+        const suma = (t) => filas.filter(m => m.tipo === t).reduce((s, m) => s + (m.cantidad || 0), 0);
+
+        $("kpiMovs").textContent     = fmt(data.total);
+        $("kpiEntradas").textContent = fmt(suma("Entrada"));
+        $("kpiSalidas").textContent  = fmt(suma("Salida") + suma("Transferencia"));
+        $("kpiMermas").textContent   = fmt(suma("Merma"));
+
+        // Con más de 500 el resumen sería parcial: mejor decirlo que mentir.
+        const parcial = data.total > 500;
+        $("kpiMovs").title = parcial
+          ? "Las piezas suman solo los primeros 500 movimientos del filtro"
+          : "";
+        ["kpiEntradas", "kpiSalidas", "kpiMermas"].forEach(id => {
+          $(id).style.opacity = parcial ? "0.65" : "1";
+        });
+      } catch { /* el resumen no debe tumbar la tabla */ }
+    }
+
+    async function cargarAreas() {
+      try {
+        areasConocidas = await AlmacenApi.inventario.areas();
+        $("listaAreas").innerHTML = areasConocidas.map(a => `<option value="${esc(a.area)}">`).join("");
+        refrescarReceptores();
+      } catch { /* no es crítico */ }
+    }
+
+    function refrescarReceptores() {
+      const area = $("fArea").value.trim().toLowerCase();
+      const match = areasConocidas.find(a => (a.area || "").toLowerCase() === area);
+      const lista = match
+        ? match.receptores
+        : [...new Set(areasConocidas.flatMap(a => a.receptores || []))].sort();
+      $("listaReceptores").innerHTML = lista.map(r => `<option value="${esc(r)}">`).join("");
+    }
+
+    // ── Rangos rápidos ────────────────────────────────────────────────
+    document.querySelectorAll("[data-rango]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const r = btn.getAttribute("data-rango");
+        const hoy = new Date();
+        if (r === "todo") { $("fDesde").value = ""; $("fHasta").value = ""; }
+        else if (r === "hoy") { $("fDesde").value = hoyISO(); $("fHasta").value = hoyISO(); }
+        else if (r === "semana") {
+          const d = new Date(hoy); d.setDate(d.getDate() - 6);
+          $("fDesde").value = d.toISOString().slice(0, 10);
+          $("fHasta").value = hoyISO();
+        } else if (r === "mes") {
+          $("fDesde").value = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
+          $("fHasta").value = hoyISO();
+        }
+        document.querySelectorAll("[data-rango]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        estado.pagina = 1;
+        cargar();
+      });
+    });
+
+    // ── Integración con el lector de código de barras ────────────────────
+    // Esta pantalla es de consulta: escanear un artículo debería buscarlo
+    // de una, sin importar en qué campo del filtro haya quedado el cursor.
+    // Mismo criterio que en Recepción: si el lector manda "CLAVE|LOTE" se
+    // busca por la clave (el lote ya se ve en la columna de resultados), y
+    // si trae basura pegada al final (mala impresión, control mal leído) se
+    // extrae solo la clave reconocible.
+    function limpiarTextoEscaneado(texto) {
+      let t = (texto || "").trim();
+      if (t.includes("|")) t = t.split("|", 2)[0].trim();
+      const mClave = t.match(/\d{2,3}\.\d{3}\.\d{4}/);
+      if (mClave) t = mClave[0];
+      return t;
+    }
+
+    $("btnBuscar").addEventListener("click", () => { estado.pagina = 1; cargar(); });
+    $("fQ").addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      $("fQ").value = limpiarTextoEscaneado($("fQ").value);
+      estado.pagina = 1;
+      cargar();
+    });
+    $("fTipo").addEventListener("change", () => { estado.pagina = 1; cargar(); });
+
+    // Si el escaneo cae con el foco en Área, Entregado a, o las fechas
+    // (por ejemplo, después de ajustar un filtro y antes de volver a hacer
+    // clic en Buscar), se redirige a Buscar en vez de ensuciar ese campo.
+    const CAMPOS_FILTRO = ["fArea", "fEntregadoA", "fDesde", "fHasta"];
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || !CAMPOS_FILTRO.includes(e.target.id)) return;
+      const valor = e.target.value.trim();
+      if (!valor) return;
+      const limpio = limpiarTextoEscaneado(valor);
+      if (!/^\d{2,3}\.\d{3}\.\d{4}$/.test(limpio)) return; // no era un escaneo, era texto normal
+      e.preventDefault();
+      e.target.value = "";
+      $("fQ").value = limpio;
+      estado.pagina = 1;
+      cargar();
+    }, true);
+    $("fArea").addEventListener("change", () => { refrescarReceptores(); estado.pagina = 1; cargar(); });
+    $("fEntregadoA").addEventListener("change", () => { estado.pagina = 1; cargar(); });
+
+    $("btnLimpiar").addEventListener("click", () => {
+      ["fQ", "fArea", "fEntregadoA", "fDesde", "fHasta"].forEach(id => $(id).value = "");
+      $("fTipo").value = "";
+      document.querySelectorAll("[data-rango]").forEach(b => b.classList.remove("active"));
+      estado.pagina = 1;
+      refrescarReceptores();
+      cargar();
+    });
+
+    $("btnAnterior").addEventListener("click", () => {
+      if (estado.pagina > 1) { estado.pagina--; cargar(); }
+    });
+    $("btnSiguiente").addEventListener("click", () => {
+      if (estado.pagina < estado.totalPaginas) { estado.pagina++; cargar(); }
+    });
+
+    // Exporta el filtro completo, no solo la página visible.
+    $("btnExportar").addEventListener("click", async function () {
+      this.disabled = true;
+      try {
+        await AlmacenApi.movimientos.exportar(filtros());
+      } catch (err) {
+        alert("No se pudo exportar: " + err.message);
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    $("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    // Permite llegar filtrado desde otra página (p.ej. ?area=Urgencias)
+    const urlP = new URLSearchParams(location.search);
+    ["q", "tipo", "area", "entregadoA", "desde", "hasta"].forEach(k => {
+      const v = urlP.get(k);
+      if (!v) return;
+      const el = $("f" + k.charAt(0).toUpperCase() + k.slice(1));
+      if (el) el.value = v;
+    });
+
+    Auth.exigirSesion("almacen").then(async (s) => {
+      if (!s) return;
+      await cargarAreas();
+      cargar();
+    });
+  })();
+  </script>
+</body>
+</html>

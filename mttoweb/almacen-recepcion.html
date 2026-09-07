@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Entrada</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    /* ── Tokens (mismos que Salida/Inventario, para que las 3 páginas del
+       módulo se sientan como un solo sistema) ──────────────────────── */
+    :root {
+      --rec-brand:      #5b4fcf;
+      --rec-brand-dark: #4a3fc0;
+      --rec-brand-tint: #f4f3fd;
+      --rec-success:    #1ca85c;
+      --rec-ink:        #1f2430;
+      --rec-muted:      #6c757d;
+      --rec-border:     #e3e5ec;
+      --rec-radius:     10px;
+      --rec-radius-sm:  7px;
+      --rec-shadow:     0 2px 10px rgba(31,36,48,.06);
+    }
+    .card { border:1px solid var(--rec-border); box-shadow: var(--rec-shadow); border-radius: var(--rec-radius); }
+
+    /* ── Tamaños pensados para una capturista de 40+, acostumbrada a Excel
+       a zoom normal en escritorio: el cuerpo chico de Bootstrap (11-12px)
+       se lee bien de joven pero cuesta de más grande, y esta pantalla se
+       usa muchas horas seguidas. Subimos el piso a ~14-16px en todo lo que
+       hay que leer o escribir, no solo en el campo de clave. ───────────── */
+    body { font-size: 1rem; }
+
+    .seccion-eyebrow {
+      font-size:.92rem; font-weight:700; letter-spacing:.02em; text-transform:uppercase;
+      color: var(--rec-ink); margin-bottom:.35rem; display:flex; align-items:center; gap:6px;
+    }
+    .seccion-eyebrow i { font-size:1.05rem; color: var(--rec-brand); }
+
+    .rec-clave  { font-family: monospace; font-size: .95rem; color: var(--rec-brand); font-weight:700; }
+    .rec-nombre { font-size: .95rem; line-height: 1.3; max-width: 320px; }
+    .rec-hint { font-size: .95rem; color: var(--rec-muted); }
+
+    label.small, .form-group label { font-size: .92rem !important; }
+    .form-control, .form-control-sm {
+      font-size: 1rem; padding-top:.5rem; padding-bottom:.5rem; min-height: 42px;
+    }
+
+    /* Campo de clave: mismo trato que el escáner de Salida, porque acá
+       también se usa el lector con frecuencia al recibir remisiones. */
+    .scan-dock { background: linear-gradient(180deg, var(--rec-brand-tint), #fff 70%); border-radius: var(--rec-radius); }
+    #fClave {
+      font-family: 'SFMono-Regular', Consolas, monospace; font-size: 1.15rem; letter-spacing:.3px;
+      padding:.65rem .85rem; border:2px solid var(--rec-brand); border-radius: var(--rec-radius-sm);
+      transition: box-shadow .15s ease;
+    }
+    #fClave:focus { box-shadow: 0 0 0 .2rem rgba(91,79,207,.25); }
+
+    /* Campos que sobreviven entre partidas de la misma remisión: una nota
+       visual para que no parezca un bug que no se borren solos. */
+    .rec-persiste {
+      font-size:.68rem; color: var(--rec-brand); font-weight:600; display:flex; align-items:center; gap:4px;
+      margin-top:2px;
+    }
+
+    /* Error inline por campo: borde rojo + texto específico debajo, en vez
+       de un único aviso genérico arriba que obliga a adivinar cuál campo
+       está mal. */
+    .form-control.is-invalid, .form-control-sm.is-invalid { border-color:#dc3545; }
+    .form-control.is-invalid:focus, .form-control-sm.is-invalid:focus { box-shadow: 0 0 0 .15rem rgba(220,53,69,.2); }
+    .campo-error {
+      font-size:.88rem; color:#dc3545; margin-top:.25rem; display:none;
+      align-items:center; gap:5px; font-weight:600;
+    }
+    .campo-error.mostrar { display:flex; }
+    .campo-error::before { content:"⚠"; font-size:1rem; }
+
+    /* Toggle "No aplica" del RFC: distingue explícitamente "no se ha
+       llenado todavía" de "este proveedor no tiene RFC registrado" — un
+       campo vacío por sí solo no dice cuál de los dos es. */
+    #fRfcProveedor:disabled { background:#f4f5fa; color: var(--rec-muted); }
+    .rfc-no-aplica-check { font-size:.88rem; color: var(--rec-ink); white-space:nowrap; }
+
+    #hTabla thead th {
+      font-size:.85rem; text-transform:uppercase; letter-spacing:.02em; color: var(--rec-ink);
+      border-top:none; font-weight:700;
+    }
+    #hTabla td { font-size:.95rem; }
+    #hTablaBody tr:hover { background:#fafafd; }
+
+    /* Resaltado de la opción activa al navegar un dropdown con ↑↓. */
+    .list-group-item.activo { background: var(--rec-brand-tint); }
+    /* Destello breve en la fila recién agregada: una confirmación que se ve
+       con el rabillo del ojo, sin depender de leer el aviso verde de arriba
+       (que puede pasar desapercibido si está mirando el teclado o el papel
+       de la remisión). */
+    @keyframes filaNueva { from { background: #d9f5e4; } to { background: transparent; } }
+    #hTablaBody tr.fila-nueva { animation: filaNueva 2.2s ease-out; }
+
+    #btnEntrada {
+      padding:1rem; font-size:1.15rem; font-weight:700; min-height:58px;
+      border-radius: var(--rec-radius-sm); box-shadow: 0 6px 16px rgba(28,168,92,.22);
+    }
+    #btnEntrada:disabled { box-shadow:none; }
+
+    /* Campos con autocompletado: una pista visual discreta de que hay
+       sugerencias esperando, para no depender de que lo descubra al azar
+       tecleando. */
+    .con-catalogo { background-image: none; }
+    .con-catalogo-icono {
+      position:absolute; right:10px; top:38px; color:#adb5bd; font-size:1rem; pointer-events:none;
+    }
+
+    /* ── Contraste: el gris casi invisible de Bootstrap por defecto no se
+       nota como borde, y los títulos de sección en gris apagado se leían
+       más débiles de lo que deberían. ──────────────────────────────── */
+    .form-control, .form-control-sm { border-color:#c7cddb; color: var(--rec-ink); }
+    .form-control:focus, .form-control-sm:focus {
+      border-color: var(--rec-brand); box-shadow: 0 0 0 .15rem rgba(91,79,207,.18);
+    }
+    label.small { color: var(--rec-ink); font-weight:600; }
+
+    .seccion-badge {
+      width:22px; height:22px; border-radius:50%; flex:none;
+      display:inline-flex; align-items:center; justify-content:center; background: var(--rec-brand);
+    }
+    .seccion-badge i { color:#fff; font-size:.9rem; }
+
+    /* Panel de remisión: agrupa lo que se captura UNA vez por remisión
+       (proveedor, vale, CLUES...) separado de lo que cambia en cada
+       partida — se puede cerrar para no competir por atención mientras
+       se escanean varios artículos seguidos. */
+    .panel-remision { border:1px solid var(--rec-border); border-radius: var(--rec-radius); overflow:hidden; }
+    .panel-remision-header {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:.7rem .95rem; background:#f4f5fa; cursor:pointer; user-select:none;
+    }
+    .panel-remision-header:hover { background:#eceef8; }
+    .panel-remision.abierto .panel-remision-header { border-bottom:1px solid var(--rec-border); }
+    .panel-remision-titulo { display:flex; align-items:center; gap:8px; font-weight:700; font-size:.95rem; color: var(--rec-ink); }
+    .panel-remision-resumen {
+      font-size:.9rem; color: var(--rec-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:340px;
+    }
+    .panel-remision-chevron { color: var(--rec-muted); transition: transform .2s ease; flex:none; }
+    .panel-remision.abierto .panel-remision-chevron { transform: rotate(180deg); }
+    .panel-remision-body { padding:1rem 1rem .2rem; background:#fff; }
+    .subseccion + .subseccion { margin-top:1rem; padding-top:.9rem; border-top:1px dashed var(--rec-border); }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <!-- Sidebar -->
+      <div id="sidebarInyectado"></div>
+      <!-- /Sidebar -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0 font-weight-bold">Entrada de material</h3>
+            <div class="d-flex" style="gap:8px">
+              <a href="almacen-movimientos.html" class="btn btn-outline-secondary btn-sm">
+                <i class="typcn typcn-shopping-cart mr-1"></i>Ir a Salida
+              </a>
+            </div>
+          </div>
+
+          <!-- Formulario horizontal: todos los campos visibles sin bajar, el
+               botón queda a la vista siempre en la misma pantalla. -->
+          <div class="card mb-3 scan-dock">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap:8px">
+                <div class="seccion-eyebrow mb-0"><span class="seccion-badge"><i class="typcn typcn-barcode"></i></span>Entrada al almacén</div>
+                <p class="rec-hint mb-0">Da de alta lo que llega del proveedor. Si el lote no existe, se crea.</p>
+              </div>
+
+              <div class="form-row mt-2">
+                <div class="form-group col-md-3 position-relative">
+                  <label class="small mb-1">Clave SSA <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="fClave" aria-describedby="fClaveError"
+                         placeholder="Escribe o escanea..." autocomplete="off" autofocus>
+                  <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                       id="claveDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                  </div>
+                  <small id="fClaveNombre" class="d-block mt-1"></small>
+                  <div class="campo-error" id="fClaveError" role="alert"></div>
+                </div>
+                <div class="form-group col-md-2">
+                  <label class="small mb-1">Lote <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm" id="fLote" placeholder="Número de lote" aria-describedby="fLoteError">
+                  <div class="campo-error" id="fLoteError" role="alert"></div>
+                </div>
+                <div class="form-group col-md-2">
+                  <label class="small mb-1">Cantidad <span class="text-danger">*</span></label>
+                  <input type="number" inputmode="decimal" class="form-control form-control-sm" id="fCantidad" min="0.0001" step="any" aria-describedby="fCantidadError">
+                  <div class="campo-error" id="fCantidadError" role="alert"></div>
+                </div>
+                <div class="form-group col-md-2">
+                  <label class="small mb-1">Precio unitario</label>
+                  <div class="input-group input-group-sm">
+                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                    <input type="number" inputmode="decimal" class="form-control" id="fPrecioUnitario" min="0" step="0.01" placeholder="0.00">
+                  </div>
+                </div>
+                <div class="form-group col-md-2">
+                  <label class="small mb-1">Valor total</label>
+                  <div class="input-group input-group-sm">
+                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                    <input type="number" inputmode="decimal" class="form-control" id="fValorTotal" min="0" step="0.01" readonly placeholder="0.00">
+                  </div>
+                </div>
+                <div class="form-group col-md-2">
+                  <label class="small mb-1">Caducidad</label>
+                  <input type="date" class="form-control form-control-sm" id="fCaducidad">
+                </div>
+                <div class="form-group col-md-3">
+                  <label class="small mb-1">Fecha de entrada</label>
+                  <input type="date" class="form-control form-control-sm" id="fFecha">
+                </div>
+              </div>
+
+              <div class="subseccion mt-3">
+                <div class="seccion-eyebrow"><span class="seccion-badge"><i class="typcn typcn-truck"></i></span>Origen de la remisión</div>
+                <div class="form-row">
+                  <div class="form-group col-md-3 position-relative">
+                    <label class="small mb-1">Proveedor</label>
+                    <input type="text" class="form-control form-control-sm" id="fProveedor"
+                           placeholder="Escribe nombre del proveedor..." autocomplete="off">
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="proveedorDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                  </div>
+                  <div class="form-group col-md-2 position-relative">
+                    <label class="small mb-1">RFC Proveedor</label>
+                    <input type="text" class="form-control form-control-sm" id="fRfcProveedor"
+                           placeholder="RFCxxxxxxxxxx" autocomplete="off">
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="rfcProveedorDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                    <label class="rfc-no-aplica-check d-flex align-items-center mt-1 mb-0" style="cursor:pointer">
+                      <input type="checkbox" id="fRfcNoAplica" class="mr-1">
+                      <span>Este proveedor no tiene RFC</span>
+                    </label>
+                  </div>
+                  <div class="form-group col-md-2">
+                    <label class="small mb-1">Vale</label>
+                    <input type="text" class="form-control form-control-sm" id="fVale" placeholder="IMB-12345">
+                  </div>
+                  <div class="form-group col-md-2 position-relative">
+                    <label class="small mb-1">Programa</label>
+                    <input type="text" class="form-control form-control-sm" id="fPrograma"
+                           autocomplete="off" placeholder="U013...">
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="programaDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                  </div>
+                  <div class="form-group col-md-2">
+                    <label class="small mb-1">Orden de suministro</label>
+                    <input type="text" class="form-control form-control-sm" id="fOrden">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-md-3 position-relative">
+                    <label class="small mb-1">Fuente de financiamiento</label>
+                    <input type="text" class="form-control form-control-sm" id="fFuenteFinanciamiento" autocomplete="off">
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="fuenteDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                  </div>
+                  <div class="form-group col-md-3 position-relative">
+                    <label class="small mb-1">Partida presupuestal</label>
+                    <input type="text" class="form-control form-control-sm" id="fPartidaPresupuestal" autocomplete="off">
+                    <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                         id="partidaDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                    </div>
+                  </div>
+                  <div class="form-group col-md-2 d-flex align-items-end">
+                    <label class="small mb-1 d-flex align-items-center" style="cursor:pointer">
+                      <input type="checkbox" id="fInsumoCpm" class="mr-2">
+                      <span>Insumo CPM</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel-remision mt-3 abierto" id="panelRemision">
+                <div class="panel-remision-header" id="panelRemisionHeader">
+                  <div class="panel-remision-titulo">
+                    <span class="seccion-badge"><i class="typcn typcn-document-text"></i></span>
+                    Datos institucionales <span class="text-muted font-weight-normal" style="font-size:.68rem">(opcional)</span>
+                  </div>
+                  <div class="d-flex align-items-center" style="gap:10px; min-width:0">
+                    <span class="panel-remision-resumen" id="resumenRemision">Sin datos de remisión aún</span>
+                    <i class="typcn typcn-chevron-down panel-remision-chevron" id="panelRemisionChevron"></i>
+                  </div>
+                </div>
+                <div class="panel-remision-body" id="panelRemisionBody">
+
+                  <div class="subseccion">
+                    <small class="text-muted font-weight-normal d-block mb-2">Para el formato de reporte semanal por CLUES</small>
+                    <div class="form-row">
+                      <div class="form-group col-md-4">
+                        <label class="small mb-1">Entidad federativa</label>
+                        <input type="text" class="form-control form-control-sm" id="fEntidad"
+                               placeholder="TAMAULIPAS" autocomplete="off">
+                        <small class="text-muted">Dato institucional único, no cambia por remisión.</small>
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label class="small mb-1">CLUES destino</label>
+                        <input type="text" class="form-control form-control-sm" id="fCluesDestino"
+                               placeholder="TSIMB001260" autocomplete="off">
+                        <small class="text-muted">Dato institucional único, no cambia por remisión.</small>
+                      </div>
+                      <div class="form-group col-md-4 position-relative">
+                        <label class="small mb-1">CLUES origen</label>
+                        <input type="text" class="form-control form-control-sm" id="fCluesOrigen"
+                               placeholder="TSSSA017786" autocomplete="off">
+                        <div class="list-group list-group-sm position-absolute w-100 mt-0"
+                             id="cluesOrigenDropdown" style="max-height: 240px; overflow-y: auto; display: none; z-index: 1000;">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row mt-3">
+                <div class="form-group col-md-12">
+                  <label class="small mb-1">Notas</label>
+                  <input type="text" class="form-control form-control-sm" id="fNotas">
+                </div>
+              </div>
+              <div class="form-row mt-2">
+                <div class="form-group col-md-12">
+                  <button class="btn btn-success btn-block" id="btnEntrada">
+                    <i class="typcn typcn-download-outline mr-1"></i>Registrar entrada
+                  </button>
+                </div>
+              </div>
+
+              <div class="alert alert-danger py-2 mb-0 d-none" id="recError"></div>
+              <div class="alert alert-success py-2 mb-0 d-none" id="recOk"></div>
+            </div>
+          </div>
+
+
+          <!-- Últimas entradas: a todo lo ancho, así entran las columnas sin
+               amontonarse en vez de compartir la pantalla con el formulario. -->
+          <div class="card">
+            <div class="card-body">
+              <h6 class="card-title mb-2"><i class="typcn typcn-time text-muted mr-1"></i>Últimas entradas</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="hTabla">
+                  <thead class="bg-light">
+                    <tr><th>Fecha</th><th>Clave</th><th>Artículo</th><th>Lote</th>
+                        <th class="text-right">Cant.</th><th>Proveedor</th><th>Vale</th></tr>
+                  </thead>
+                  <tbody id="hTablaBody">
+                    <tr><td colspan="7" class="text-muted text-center">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content-wrapper -->
+        <footer class="footer"><span class="text-muted text-sm-left">Almacén Central · HGR Reynosa</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script>
+  (function () {
+    const fmt = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+    const fmtFecha = (s) => s ? new Date(s).toLocaleDateString("es-MX") : "—";
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const $ = (id) => document.getElementById(id);
+
+    // ── Enter = siguiente celda (como Excel) ──────────────────────────────
+    // Orden visual del formulario. Enter avanza al siguiente campo visible
+    // en vez de no hacer nada o intentar enviar el formulario — el reflejo
+    // de 20+ años de captura en hojas de cálculo es que Enter baja de celda.
+    const ORDEN_TAB = [
+      "fClave", "fLote", "fCantidad", "fPrecioUnitario", "fCaducidad", "fFecha",
+      "fProveedor", "fRfcProveedor", "fVale", "fPrograma", "fOrden",
+      "fFuenteFinanciamiento", "fPartidaPresupuestal", "fInsumoCpm",
+      "fEntidad", "fCluesDestino", "fCluesOrigen", "fNotas"
+    ];
+    function focoSiguiente(idActual) {
+      const i = ORDEN_TAB.indexOf(idActual);
+      if (i < 0) return;
+      for (let j = i + 1; j < ORDEN_TAB.length; j++) {
+        const el = $(ORDEN_TAB[j]);
+        if (el && el.offsetParent !== null) {
+          el.focus();
+          if (el.select && el.type !== "checkbox") el.select();
+          return;
+        }
+      }
+      $("btnEntrada").focus();
+    }
+
+    // ── Navegación con flechas ↑↓ en los dropdowns de autocompletar ───────
+    // Antes Enter siempre tomaba la primera opción; con listas de más de
+    // una coincidencia no había forma de elegir la segunda sin usar el
+    // mouse. Se agrega resaltado con flechas y Enter confirma la resaltada.
+    function activarNavegacionFlechas(inputEl, dropdownEl) {
+      let indice = -1;
+      const botones = () => Array.from(dropdownEl.querySelectorAll("button"));
+      function resaltar() {
+        botones().forEach((b, i) => b.classList.toggle("activo", i === indice));
+        const activo = botones()[indice];
+        if (activo) activo.scrollIntoView({ block: "nearest" });
+      }
+      inputEl.addEventListener("keydown", function (e) {
+        if (dropdownEl.style.display === "none") return;
+        const btns = botones();
+        if (!btns.length) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); indice = Math.min(indice + 1, btns.length - 1); resaltar(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); indice = Math.max(indice - 1, 0); resaltar(); }
+      });
+      inputEl.addEventListener("input", () => { indice = -1; });
+      inputEl.addEventListener("focus", () => { indice = -1; });
+      return { obtenerElegido: () => (indice >= 0 ? botones()[indice] : botones()[0]) };
+    }
+
+    $("fFecha").value = new Date().toISOString().slice(0, 10);
+
+    // Pista visual de "este campo tiene catálogo": un ícono discreto para
+    // que se note sin tener que descubrirlo tecleando al azar.
+    ["fClave", "fProveedor", "fRfcProveedor", "fPrograma", "fFuenteFinanciamiento",
+     "fPartidaPresupuestal", "fCluesOrigen"].forEach(id => {
+      const input = $(id);
+      if (!input) return;
+      const icono = document.createElement("i");
+      icono.className = "typcn typcn-arrow-sorted-down con-catalogo-icono";
+      icono.setAttribute("aria-hidden", "true");
+      input.parentElement.style.position = "relative";
+      input.parentElement.appendChild(icono);
+      input.style.paddingRight = "28px";
+    });
+
+    // Calcular Valor Total automáticamente (Cantidad × Precio Unitario)
+    function calcularValorTotal() {
+      const cant = parseFloat($("fCantidad").value) || 0;
+      const precio = parseFloat($("fPrecioUnitario").value) || 0;
+      $("fValorTotal").value = (cant * precio).toFixed(2);
+    }
+    $("fCantidad").addEventListener("input", calcularValorTotal);
+    $("fPrecioUnitario").addEventListener("input", calcularValorTotal);
+
+    // ── Error inline por campo ────────────────────────────────────────────
+    // Un solo aviso genérico arriba obliga a leerlo y adivinar cuál campo
+    // está mal; esto marca el campo exacto con borde rojo + texto debajo.
+    function marcarError(inputId, msg) {
+      const input = $(inputId);
+      const cont = $(inputId + "Error");
+      input.classList.add("is-invalid");
+      if (cont) { cont.textContent = msg; cont.classList.add("mostrar"); }
+    }
+    function limpiarError(inputId) {
+      const input = $(inputId);
+      const cont = $(inputId + "Error");
+      input.classList.remove("is-invalid");
+      if (cont) { cont.textContent = ""; cont.classList.remove("mostrar"); }
+    }
+    ["fClave", "fLote", "fCantidad"].forEach(id => {
+      $(id).addEventListener("input", () => limpiarError(id));
+    });
+
+    function aviso(id, msg) {
+      const otro = id === "recOk" ? "recError" : "recOk";
+      $(otro).classList.add("d-none");
+      const e = $(id);
+      e.innerHTML = msg;
+      e.classList.remove("d-none");
+      if (id === "recOk") setTimeout(() => e.classList.add("d-none"), 6000);
+    }
+
+    // Autocompletado de clave con dropdown
+    let claveTimeout;
+    const inputClave = $("fClave");
+    const dropdownClave = $("claveDropdown");
+    let claveSeleccionada = null;
+
+    inputClave.addEventListener("input", async function () {
+      clearTimeout(claveTimeout);
+      const q = this.value.trim();
+
+      if (!q) {
+        dropdownClave.style.display = "none";
+        $("fClaveNombre").textContent = "";
+        claveSeleccionada = null;
+        return;
+      }
+
+      claveTimeout = setTimeout(async () => {
+        try {
+          const claves = await AlmacenApi.inventario.buscarClaves(q, 30);
+          if (claves.length === 0) {
+            dropdownClave.innerHTML = '<div class="list-group-item text-muted text-center py-2">No hay coincidencias</div>';
+            dropdownClave.style.display = "block";
+            return;
+          }
+
+          // Si la búsqueda coincidió con un lote (no con clave/nombre), se
+          // avisa con su fecha de caducidad: el mismo texto de lote puede
+          // repetirse en artículos distintos con caducidades distintas, así
+          // que sin la fecha no hay forma de saber si es el mismo o no.
+          dropdownClave.innerHTML = claves.map(c => `
+            <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3"
+                    data-clave="${esc(c.clave)}" data-nombre="${esc(c.nombre)}" data-unidad="${esc(c.unidad)}"
+                    data-lote="${esc(c.loteCoincidente || "")}" data-lote-cad="${c.loteCoincidenteCaducidad || ""}">
+              <div class="small font-weight-bold" style="color:#5b4fcf">${esc(c.clave)}</div>
+              ${c.loteCoincidente ? `<div class="mt-1"><span class="badge badge-info" style="font-size:.6rem; white-space:normal">Lote ${esc(c.loteCoincidente)} · vence ${fmtFecha(c.loteCoincidenteCaducidad)}</span></div>` : ""}
+              <div class="small" style="max-width:300px; white-space:normal">${esc(c.nombre)}</div>
+              <div class="small text-muted">${esc(c.unidad)}</div>
+            </button>
+          `).join("");
+
+          // Event listeners para cada opción
+          dropdownClave.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("click", function (e) {
+              e.preventDefault();
+              inputClave.value = this.getAttribute("data-clave");
+              claveSeleccionada = {
+                clave: this.getAttribute("data-clave"),
+                nombre: this.getAttribute("data-nombre"),
+                unidad: this.getAttribute("data-unidad")
+              };
+              mostrarClaveNombre();
+              dropdownClave.style.display = "none";
+              // Si se encontró por lote, se precargan lote y caducidad: ya
+              // es el mismo lote que se está recibiendo, solo falta la
+              // cantidad.
+              const loteCoincidente = this.getAttribute("data-lote");
+              const loteCad = this.getAttribute("data-lote-cad");
+              if (loteCoincidente) {
+                $("fLote").value = loteCoincidente;
+                if (loteCad) $("fCaducidad").value = loteCad.slice(0, 10);
+                $("fCantidad").focus();
+              } else {
+                $("fLote").focus();
+              }
+            });
+          });
+
+          dropdownClave.style.display = "block";
+        } catch (err) {
+          console.error("Error buscando claves:", err);
+          dropdownClave.innerHTML = '<div class="list-group-item text-danger text-center py-2">Error en la búsqueda</div>';
+          dropdownClave.style.display = "block";
+        }
+      }, 300);
+    });
+
+    const navClave = activarNavegacionFlechas(inputClave, dropdownClave);
+    inputClave.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        dropdownClave.style.display = "none";
+        claveSeleccionada = null;
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        // Si hay dropdown visible, tomar la opción resaltada (o la primera); si no, procesar la clave
+        const elegido = dropdownClave.style.display !== "none" ? navClave.obtenerElegido() : null;
+        if (elegido) {
+          elegido.click();
+        } else {
+          procesarClaveBusqueda();
+        }
+      }
+    });
+
+    inputClave.addEventListener("blur", function () {
+      // Cerrar dropdown después de un pequeño retraso (para que click en opción sea procesado)
+      setTimeout(() => { dropdownClave.style.display = "none"; }, 200);
+      // Si el usuario escribió algo pero no seleccionó, buscar la clave
+      if (this.value.trim() && !claveSeleccionada) {
+        procesarClaveBusqueda();
+      }
+    });
+
+    // Separa CLAVE (y LOTE si venía con "|") de lo que sea que haya mandado
+    // el lector, tolerando basura pegada al final. Se usa tanto cuando se
+    // escanea con el foco en el campo de clave como cuando el foco estaba
+    // en cualquier otro campo (ver el listener global más abajo).
+    function extraerClaveYLote(texto) {
+      let c = (texto || "").trim();
+      let lote = "";
+      if (c.includes("|")) {
+        const partes = c.split("|", 2);
+        c = partes[0].trim();
+        lote = (partes[1] || "").trim();
+      } else {
+        // El lector a veces mete basura extra al final (mala impresión de la
+        // etiqueta, caracter de control mal leído) — por ejemplo llega
+        // "060.088.0868]202520" en vez de solo la clave. Si dentro del texto
+        // hay una clave CPM reconocible (NNN.NNN.NNNN), se usa esa y se
+        // descarta lo demás, en vez de buscar el texto completo y fallar.
+        const mClave = c.match(/\d{2,3}\.\d{3}\.\d{4}/);
+        if (mClave) c = mClave[0];
+      }
+      return { clave: c, lote };
+    }
+
+    async function procesarClaveBusqueda() {
+      const crudo = inputClave.value.trim();
+      if (!crudo) { $("fClaveNombre").textContent = ""; claveSeleccionada = null; return; }
+
+      const { clave, lote } = extraerClaveYLote(crudo);
+      const c = clave;
+      if (lote) $("fLote").value = lote;
+      inputClave.value = c;
+
+      try {
+        const art = await AlmacenApi.inventario.porClave(c);
+        claveSeleccionada = { clave: art.clave, nombre: art.nombre, unidad: art.unidad };
+        mostrarClaveNombre();
+        $("fLote").focus();
+      } catch (err) {
+        const msg = (err && err.message) || "";
+        if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+          $("fClaveNombre").textContent = "No se pudo contactar la API";
+        } else {
+          $("fClaveNombre").textContent = "Artículo no encontrado";
+        }
+        $("fClaveNombre").className = "text-danger";
+        claveSeleccionada = null;
+      }
+    }
+
+    // ── Escanear con el foco en cualquier otro campo ─────────────────────
+    // El lector es un teclado: si el cursor quedó parado en "Lote" o
+    // "Cantidad" (por ejemplo, después de llenar el artículo anterior) y
+    // ahí se dispara el siguiente escaneo, el texto se mete en ese campo en
+    // vez de procesarse como clave. Esto detecta esa situación al momento
+    // del Enter (todo lector termina el envío con Enter) y redirige.
+    const CAMPOS_FORMULARIO = ["fLote", "fCantidad", "fPrecioUnitario", "fValorTotal", "fCaducidad", "fFecha", "fProveedor", "fRfcProveedor", "fVale", "fPrograma", "fOrden", "fNotas", "fFuenteFinanciamiento", "fPartidaPresupuestal", "fEntidad", "fCluesDestino", "fCluesOrigen"];
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      const campo = e.target;
+      if (!CAMPOS_FORMULARIO.includes(campo.id)) return;
+      // Solo campos de este formulario, y solo si el texto que quedó ahí
+      // trae una clave reconocible — así no se roba un Enter normal de
+      // Proveedor, Vale, Notas, etc. cuando de verdad se está escribiendo.
+      const valor = campo.value.trim();
+      if (!valor) return;
+      const { clave } = extraerClaveYLote(valor);
+      if (!/^\d{2,3}\.\d{3}\.\d{4}$/.test(clave)) return;
+
+      e.preventDefault();
+      campo.value = "";                 // se limpia: esto no era lo que iba en ese campo
+      inputClave.value = valor;         // se re-procesa igual que si hubiera llegado aquí
+      claveSeleccionada = null;
+      procesarClaveBusqueda();
+    }, true); // captura: se adelanta al keydown propio de cada campo (p.ej. el submit de Proveedor)
+
+    // Campos sin dropdown propio: Enter avanza al siguiente campo (ver
+    // ORDEN_TAB). El listener de arriba (captura) ya interceptó el caso de
+    // "aquí llegó un escaneo por accidente"; si llega hasta acá es Enter de
+    // verdad y toca avanzar, no dejarlo sin efecto.
+    ["fLote", "fCantidad", "fPrecioUnitario", "fCaducidad", "fFecha", "fVale", "fOrden", "fNotas"].forEach(id => {
+      $(id).addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        focoSiguiente(id);
+      });
+    });
+
+    function mostrarClaveNombre() {
+      if (claveSeleccionada) {
+        $("fClaveNombre").textContent = claveSeleccionada.nombre + " — " + claveSeleccionada.unidad;
+        $("fClaveNombre").className = "text-success";
+      }
+    }
+
+    // Autocompletado de Proveedor
+    let proveedorTimeout;
+    const inputProveedor = $("fProveedor");
+    const dropdownProveedor = $("proveedorDropdown");
+
+    inputProveedor.addEventListener("input", async function () {
+      clearTimeout(proveedorTimeout);
+      const q = this.value.trim();
+
+      if (!q) {
+        dropdownProveedor.style.display = "none";
+        return;
+      }
+
+      proveedorTimeout = setTimeout(async () => {
+        try {
+          const proveedores = await AlmacenApi.proveedores.listar(q);
+
+          // Mostrar proveedores encontrados + opción de crear uno nuevo
+          let html = "";
+
+          if (proveedores.length > 0) {
+            html += proveedores.map(p => `
+              <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3"
+                      data-nombre="${esc(p.nombre)}">
+                <div class="small font-weight-bold">${esc(p.nombre)}</div>
+                ${p.rfc ? `<div class="small text-muted">RFC: ${esc(p.rfc)}</div>` : ""}
+              </button>
+            `).join("");
+          } else {
+            html += '<div class="list-group-item text-muted text-center py-2">Sin resultados</div>';
+          }
+
+          // Agregar botón de crear nuevo al final
+          html += `
+            <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3 border-top"
+                    id="btnNuevoProveedor">
+              <div class="small font-weight-bold" style="color:#28a745">
+                <i class="typcn typcn-plus mr-1"></i>Crear: ${esc(q)}
+              </div>
+            </button>
+          `;
+
+          dropdownProveedor.innerHTML = html;
+
+          // Click en proveedor existente
+          dropdownProveedor.querySelectorAll("button:not(#btnNuevoProveedor)").forEach(btn => {
+            btn.addEventListener("click", function (e) {
+              e.preventDefault();
+              inputProveedor.value = this.getAttribute("data-nombre");
+              dropdownProveedor.style.display = "none";
+              actualizarResumenRemision();
+              focoSiguiente("fProveedor"); // el blur dispara el "change" que carga el RFC del proveedor
+            });
+          });
+
+          // Click en "Crear nuevo proveedor"
+          const btnNuevo = $("btnNuevoProveedor");
+          if (btnNuevo) {
+            btnNuevo.addEventListener("click", async function (e) {
+              e.preventDefault();
+              await crearNuevoProveedor(q);
+            });
+          }
+
+          dropdownProveedor.style.display = "block";
+        } catch (err) {
+          console.error("Error buscando proveedores:", err);
+          dropdownProveedor.innerHTML = '<div class="list-group-item text-danger text-center py-2">Error en la búsqueda</div>';
+          dropdownProveedor.style.display = "block";
+        }
+      }, 300);
+    });
+
+    const navProveedor = activarNavegacionFlechas(inputProveedor, dropdownProveedor);
+    inputProveedor.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        dropdownProveedor.style.display = "none";
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const elegido = dropdownProveedor.style.display !== "none" ? navProveedor.obtenerElegido() : null;
+        if (elegido) {
+          elegido.click();
+        } else {
+          focoSiguiente("fProveedor");
+        }
+      }
+    });
+
+    inputProveedor.addEventListener("blur", function () {
+      setTimeout(() => { dropdownProveedor.style.display = "none"; }, 200);
+    });
+
+    async function crearNuevoProveedor(nombre) {
+      try {
+        const nuevo = await AlmacenApi.proveedores.crear(nombre, "");
+        inputProveedor.value = nuevo.nombre;
+        dropdownProveedor.style.display = "none";
+        actualizarResumenRemision();
+        aviso("recOk", `✓ Proveedor "${nombre}" creado exitosamente`);
+      } catch (err) {
+        const msg = (err && err.message) || "";
+        aviso("recError", msg.includes("Ya existe") ? "Ya existe un proveedor con ese nombre" : "Error al crear proveedor");
+      }
+    }
+
+    // ── Selector de RFC por Proveedor (autocompletado como Fuente/Partida) ──
+    let rfcPorProveedor = [];
+    let proveedorSeleccionadoId = null;
+
+    inputProveedor.addEventListener("change", async function () {
+      const nombreProveedor = this.value.trim();
+      $("fRfcProveedor").disabled = false;
+      checkRfcNoAplica.checked = false;
+
+      if (!nombreProveedor) {
+        $("fRfcProveedor").value = "";
+        rfcPorProveedor = [];
+        proveedorSeleccionadoId = null;
+        return;
+      }
+
+      try {
+        const proveedores = await AlmacenApi.proveedores.listar(nombreProveedor);
+        const proveedor = proveedores.find(p => p.nombre.toLowerCase() === nombreProveedor.toLowerCase());
+        if (proveedor) {
+          proveedorSeleccionadoId = proveedor.id;
+          // Cargar RFC del proveedor
+          const datos = await AlmacenApi.proveedores.obtenerConRfc(proveedor.id);
+          rfcPorProveedor = datos.rfc.filter(r => r.esActivo).map(r => r.rfc);
+          // Pre-llenar con el RFC activo
+          if (datos.rfcActivo) $("fRfcProveedor").value = datos.rfcActivo;
+          sincronizarCheckNoAplica();
+        }
+      } catch (err) {
+        console.error("Error cargando RFC del proveedor:", err);
+      }
+    });
+
+    // Selector de RFC con autocompletado (como Fuente/Partida)
+    function crearSelectorRfc() {
+      const inputRfc = $("fRfcProveedor");
+      const dropdownRfc = $("rfcProveedorDropdown");
+
+      function mostrar() {
+        const q = inputRfc.value.trim().toLowerCase();
+        const coincidencias = rfcPorProveedor.filter(r => r.toLowerCase().includes(q));
+
+        let html = coincidencias.map(r => `
+          <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3" data-rfc="${esc(r)}">
+            <span class="small font-weight-bold">${esc(r)}</span>
+          </button>`).join("");
+
+        const yaExiste = rfcPorProveedor.some(r => r.toLowerCase() === q);
+        if (q && !yaExiste) {
+          html += `
+            <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3 border-top" data-nuevo="1">
+              <div class="small font-weight-bold" style="color:#28a745"><i class="typcn typcn-plus mr-1"></i>Usar: ${esc(q)}</div>
+            </button>`;
+        }
+        if (!html) html = '<div class="list-group-item text-muted text-center py-2">Sin coincidencias</div>';
+
+        dropdownRfc.innerHTML = html;
+        dropdownRfc.querySelectorAll("[data-rfc]").forEach(btn => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            inputRfc.value = this.getAttribute("data-rfc");
+            dropdownRfc.style.display = "none";
+            focoSiguiente("fRfcProveedor");
+          });
+        });
+        const btnNuevo = dropdownRfc.querySelector("[data-nuevo]");
+        if (btnNuevo) btnNuevo.addEventListener("click", (e) => { e.preventDefault(); dropdownRfc.style.display = "none"; focoSiguiente("fRfcProveedor"); });
+
+        dropdownRfc.style.display = "block";
+      }
+
+      const nav = activarNavegacionFlechas(inputRfc, dropdownRfc);
+      inputRfc.addEventListener("focus", mostrar);
+      inputRfc.addEventListener("input", mostrar);
+      inputRfc.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") { dropdownRfc.style.display = "none"; return; }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const elegido = dropdownRfc.style.display !== "none" ? nav.obtenerElegido() : null;
+          if (elegido) elegido.click();
+          else focoSiguiente("fRfcProveedor");
+        }
+      });
+      inputRfc.addEventListener("blur", () => {
+        setTimeout(() => { dropdownRfc.style.display = "none"; }, 200);
+      });
+    }
+
+    crearSelectorRfc();
+
+    // ── "Este proveedor no tiene RFC" ─────────────────────────────────────
+    // Un campo vacío no dice si nadie lo llenó todavía o si de verdad no
+    // aplica (pasa con ~70% de las remisiones históricas: compra local,
+    // proveedor sin RFC registrado, etc.). El checkbox lo hace explícito y
+    // guarda "NO APLICA" — el mismo valor que ya usa el resto del histórico
+    // — en vez de mandar el campo vacío sin más contexto.
+    const RFC_NO_APLICA = "NO APLICA";
+    const checkRfcNoAplica = $("fRfcNoAplica");
+    checkRfcNoAplica.addEventListener("change", function () {
+      const inputRfc = $("fRfcProveedor");
+      if (this.checked) {
+        inputRfc.value = RFC_NO_APLICA;
+        inputRfc.disabled = true;
+      } else {
+        inputRfc.disabled = false;
+        inputRfc.value = "";
+        inputRfc.focus();
+      }
+    });
+    // Si el RFC activo del proveedor ya es "NO APLICA" (dato heredado), el
+    // checkbox refleja ese estado al autocompletarse.
+    function sincronizarCheckNoAplica() {
+      const esNoAplica = $("fRfcProveedor").value.trim().toUpperCase() === RFC_NO_APLICA;
+      checkRfcNoAplica.checked = esNoAplica;
+      $("fRfcProveedor").disabled = esNoAplica;
+    }
+
+    $("btnEntrada").addEventListener("click", async function () {
+      const clave = $("fClave").value.trim();
+      const lote  = $("fLote").value.trim();
+      const cant  = parseFloat($("fCantidad").value);
+
+      ["fClave", "fLote", "fCantidad"].forEach(limpiarError);
+
+      let primerCampoConError = null;
+      if (!clave) { marcarError("fClave", "Falta la clave."); primerCampoConError = primerCampoConError || "fClave"; }
+      if (!lote)  { marcarError("fLote", "Falta el lote."); primerCampoConError = primerCampoConError || "fLote"; }
+      if (!(cant > 0)) { marcarError("fCantidad", "Debe ser mayor que cero."); primerCampoConError = primerCampoConError || "fCantidad"; }
+
+      if (primerCampoConError) {
+        aviso("recError", "Hay campos por corregir.");
+        $(primerCampoConError).focus();
+        return;
+      }
+
+      const dto = {
+        tipo: "Entrada",
+        claveArticulo:   clave,
+        lote:            lote,
+        cantidad:        cant,
+        caducidad:       $("fCaducidad").value || undefined,
+        fecha:           $("fFecha").value || undefined,
+        proveedor:       $("fProveedor").value.trim() || undefined,
+        rfcProveedor:    $("fRfcProveedor").value.trim() || undefined,
+        vale:            $("fVale").value.trim() || undefined,
+        programa:        $("fPrograma").value.trim() || undefined,
+        ordenSuministro: $("fOrden").value.trim() || undefined,
+        notas:           $("fNotas").value.trim() || undefined,
+        fuenteFinanciamiento: $("fFuenteFinanciamiento").value.trim() || undefined,
+        partidaPresupuestal:  $("fPartidaPresupuestal").value.trim() || undefined,
+        precioUnitario: parseFloat($("fPrecioUnitario").value) || undefined,
+        valorTotal:     parseFloat($("fValorTotal").value) || undefined,
+        insumoCpm:      $("fInsumoCpm").checked
+      };
+
+      this.disabled = true;
+      try {
+        await AlmacenApi.movimientos.registrar(dto);
+        aviso("recOk", "<strong>Entrada registrada.</strong>");
+        // Limpiar lo que cambia por partida, dejando proveedor/vale/orden
+        // porque normalmente llegan varios artículos en la misma remisión.
+        // El precio SÍ se mantiene: casi siempre todas las piezas de la
+        // misma remisión traen el mismo precio en la factura.
+        $("fClave").value = "";
+        $("fLote").value = "";
+        $("fCantidad").value = "";
+        $("fCaducidad").value = "";
+        $("fValorTotal").value = "";
+        $("fInsumoCpm").checked = false;
+        $("fClaveNombre").textContent = "";
+        $("fClave").focus();
+        cargarHistorial(true);
+      } catch (err) {
+        aviso("recError", esc((err && err.message) || "No se pudo registrar."));
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    // Selector de texto libre reutilizable: sugiere lo que ya se ha usado
+    // (Programa, Fuente de financiamiento, Partida presupuestal — ninguno
+    // tiene tabla propia como Proveedor), y deja un botón para quedarse con
+    // lo escrito si no hay coincidencia. "Agregar uno nuevo" es solo
+    // escribirlo; la próxima vez ya aparece en la lista porque el backend
+    // arma la lista de valores ya usados.
+    function crearSelectorTextoLibre(inputEl, dropdownEl, cargarLista) {
+      let conocidos = [];
+      async function cargar() {
+        try { conocidos = await cargarLista(); }
+        catch { /* no es crítico */ }
+      }
+
+      function mostrar() {
+        const q = inputEl.value.trim();
+        const coincidencias = q
+          ? conocidos.filter(p => p.toLowerCase().includes(q.toLowerCase()))
+          : conocidos;
+
+        let html = coincidencias.map(p => `
+          <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3" data-valor="${esc(p)}">
+            <span class="small font-weight-bold">${esc(p)}</span>
+          </button>`).join("");
+
+        const yaExiste = conocidos.some(p => p.toLowerCase() === q.toLowerCase());
+        if (q && !yaExiste) {
+          html += `
+            <button type="button" class="list-group-item list-group-item-action text-left py-2 px-3 border-top" data-nuevo="1">
+              <div class="small font-weight-bold" style="color:#28a745"><i class="typcn typcn-plus mr-1"></i>Usar: ${esc(q)}</div>
+            </button>`;
+        }
+        if (!html) html = '<div class="list-group-item text-muted text-center py-2">Sin coincidencias</div>';
+
+        dropdownEl.innerHTML = html;
+        dropdownEl.querySelectorAll("[data-valor]").forEach(btn => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            inputEl.value = this.getAttribute("data-valor");
+            dropdownEl.style.display = "none";
+            actualizarResumenRemision();
+            focoSiguiente(inputEl.id);
+          });
+        });
+        const btnNuevo = dropdownEl.querySelector("[data-nuevo]");
+        if (btnNuevo) btnNuevo.addEventListener("click", (e) => { e.preventDefault(); dropdownEl.style.display = "none"; focoSiguiente(inputEl.id); });
+
+        dropdownEl.style.display = "block";
+      }
+
+      const nav = activarNavegacionFlechas(inputEl, dropdownEl);
+      inputEl.addEventListener("focus", mostrar);
+      inputEl.addEventListener("input", mostrar);
+      inputEl.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") { dropdownEl.style.display = "none"; return; }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const elegido = dropdownEl.style.display !== "none" ? nav.obtenerElegido() : null;
+          if (elegido) elegido.click();
+          else focoSiguiente(inputEl.id);
+        }
+      });
+      inputEl.addEventListener("blur", () => {
+        setTimeout(() => { dropdownEl.style.display = "none"; }, 200);
+      });
+
+      return cargar;
+    }
+
+    const cargarProgramas = crearSelectorTextoLibre($("fPrograma"), $("programaDropdown"), () => AlmacenApi.inventario.programas());
+    const cargarFuentes   = crearSelectorTextoLibre($("fFuenteFinanciamiento"), $("fuenteDropdown"), () => AlmacenApi.inventario.fuentesFinanciamiento());
+    const cargarPartidas  = crearSelectorTextoLibre($("fPartidaPresupuestal"), $("partidaDropdown"), () => AlmacenApi.inventario.partidasPresupuestales());
+    // RFC ya no es texto libre — se auto-llena desde el proveedor seleccionado
+
+    async function cargarHistorial(flashNueva) {
+      try {
+        const data = await AlmacenApi.movimientos.listar({ tipo: "Entrada", pagina: 1, tamano: 20 });
+        const filas = data.datos || [];
+        $("hTablaBody").innerHTML = filas.length
+          ? filas.map(m => `<tr>
+              <td class="small">${fmtFecha(m.fecha)}</td>
+              <td class="rec-clave">${esc(m.clave)}</td>
+              <td class="rec-nombre">${esc(m.nombre)}</td>
+              <td class="small">${esc(m.lote || "—")}</td>
+              <td class="text-right font-weight-bold">${fmt(m.cantidad)}</td>
+              <td class="small">${esc(m.proveedor || "—")}</td>
+              <td class="small">${esc(m.vale || "—")}</td>
+            </tr>`).join("")
+          : '<tr><td colspan="7" class="text-muted text-center py-3">Sin entradas todavía</td></tr>';
+        // Destello breve en la fila recién guardada: una confirmación que se
+        // nota con el rabillo del ojo, sin depender de leer el aviso verde
+        // de arriba (que puede pasar desapercibido si ya está mirando el
+        // teclado o el papel de la remisión para el siguiente artículo).
+        if (flashNueva && filas.length) {
+          const primeraFila = $("hTablaBody").querySelector("tr");
+          if (primeraFila) primeraFila.classList.add("fila-nueva");
+        }
+      } catch (err) {
+        $("hTablaBody").innerHTML =
+          `<tr><td colspan="7" class="text-danger text-center">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    // ── Datos institucionales ─────────────────────────────────────────────
+    // Entidad y CLUES destino son un único valor fijo del hospital (viven en
+    // alm_config, no tienen historial por remisión) — se precargan y punto,
+    // sin dropdown de sugerencias que no aplicaría. CLUES origen sí varía
+    // por remisión (distintas unidades que envían material) y tiene su
+    // propia columna en alm_movimiento, así que mantiene el autocompletado
+    // contra la API, igual que Programa/Fuente/Partida.
+    const cargarCluesOrigen  = crearSelectorTextoLibre($("fCluesOrigen"),   $("cluesOrigenDropdown"),   () => AlmacenApi.inventario.cluesOrigen());
+    ["fEntidad", "fCluesDestino"].forEach(id => {
+      $(id).addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        focoSiguiente(id);
+      });
+    });
+
+    async function cargarConfig() {
+      try {
+        const cfg = await AlmacenApi.config.obtener();
+        if (cfg.entidadFederativa) $("fEntidad").value = cfg.entidadFederativa;
+        if (cfg.cluesDestino)      $("fCluesDestino").value = cfg.cluesDestino;
+        if (cfg.cluesOrigen)       $("fCluesOrigen").value = cfg.cluesOrigen;
+      } catch { /* no es crítico */ }
+    }
+
+    function guardarConfigSiCambio() {
+      const ent = $("fEntidad").value.trim();
+      const cd  = $("fCluesDestino").value.trim();
+      const co  = $("fCluesOrigen").value.trim();
+      AlmacenApi.config.guardar({
+        entidadFederativa: ent || null,
+        cluesDestino:      cd  || null,
+        cluesOrigen:       co  || null
+      }).catch(() => {});
+    }
+    $("fEntidad").addEventListener("change", guardarConfigSiCambio);
+    $("fCluesDestino").addEventListener("change", guardarConfigSiCambio);
+    $("fCluesOrigen").addEventListener("change", guardarConfigSiCambio);
+
+    // ── Panel de remisión: colapsable, con resumen visible cuando está
+    // cerrado. Se acuerda de cómo lo dejó el usuario, para no repetir el
+    // gesto cada vez que se abre la página. ──────────────────────────────
+    const panelRemision = $("panelRemision");
+    const panelRemisionBody = $("panelRemisionBody");
+    function aplicarEstadoPanelRemision(abierto) {
+      panelRemision.classList.toggle("abierto", abierto);
+      panelRemisionBody.classList.toggle("d-none", !abierto);
+    }
+    let panelRemisionAbierto = localStorage.getItem("alm_rec_panel_abierto");
+    aplicarEstadoPanelRemision(panelRemisionAbierto === null ? true : panelRemisionAbierto === "1");
+    $("panelRemisionHeader").addEventListener("click", () => {
+      const abierto = !panelRemision.classList.contains("abierto");
+      localStorage.setItem("alm_rec_panel_abierto", abierto ? "1" : "0");
+      aplicarEstadoPanelRemision(abierto);
+    });
+
+    const CAMPOS_RESUMEN_REMISION = ["fProveedor", "fVale", "fPrograma"];
+    function actualizarResumenRemision() {
+      const proveedor = $("fProveedor").value.trim();
+      const vale = $("fVale").value.trim();
+      const programa = $("fPrograma").value.trim();
+      const partes = [];
+      if (proveedor) partes.push(proveedor);
+      if (vale) partes.push("Vale " + vale);
+      if (programa) partes.push("Prog. " + programa);
+      $("resumenRemision").textContent = partes.length ? partes.join(" · ") : "Sin datos de remisión aún";
+    }
+    CAMPOS_RESUMEN_REMISION.forEach(id => $(id).addEventListener("input", actualizarResumenRemision));
+
+    $("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    Auth.exigirSesion("almacen").then((s) => {
+      if (!s) return;
+      cargarProgramas();
+      cargarFuentes();
+      cargarPartidas();
+      cargarCluesOrigen();
+      cargarHistorial();
+      cargarConfig().then(actualizarResumenRemision);
+    });
+  })();
+  </script>
+</body>
+</html>

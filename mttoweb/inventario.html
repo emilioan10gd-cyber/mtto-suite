@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>MTTO · Inventario</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <h3 class="mb-0 font-weight-bold">Inventario</h3>
+                <p id="estadoCarga">Cargando datos...</p>
+              </div>
+              <div>
+                <button type="button" class="btn btn-outline-secondary" id="btnExportar">
+                  <i class="typcn typcn-download mr-1"></i>Exportar
+                </button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalArticulo" id="btnNuevoArticulo">
+                  <i class="typcn typcn-plus mr-1"></i>Nuevo artículo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body py-3">
+                  <form class="form-inline" id="formFiltros">
+                    <input type="text" class="form-control mr-2 mb-2" id="filtroTexto" placeholder="Buscar por código o nombre">
+                    <select class="form-control mr-2 mb-2" id="filtroCategoria">
+                      <option value="">Todas las categorías</option>
+                    </select>
+                    <select class="form-control mr-2 mb-2" id="filtroNivel">
+                      <option value="">Todos los niveles</option>
+                      <option value="Sin stock">Sin stock</option>
+                      <option value="Bajo minimo">Bajo mínimo</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Sobre maximo">Sobre máximo</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary mb-2">Filtrar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Nombre</th>
+                          <th>Categoría</th>
+                          <th>Almacén</th>
+                          <th class="text-right">Stock</th>
+                          <th class="text-right">Mínimo</th>
+                          <th>Nivel</th>
+                          <th class="text-right">Valor</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaInventario">
+                        <tr><td colspan="9">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span id="resumenPagina" class="text-muted small"></span>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagAnterior">Anterior</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagSiguiente">Siguiente</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- ============================== Modal: Comparativa de precios ============================== -->
+  <div class="modal fade" id="modalPrecios" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Comparativa de precios: <span id="titleArticuloCodigo"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <div class="row mb-3">
+            <div class="col-12">
+              <label>Cantidad a comprar (opcional - para cálculo de costo total):</label>
+              <div class="input-group">
+                <input type="number" id="cantidadConsulta" class="form-control" min="1" step="1" placeholder="Ej: 10">
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-secondary" id="btnActualizar">Actualizar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Gráfica comparativa</h6>
+                  <div id="chartPreciosComparativa" style="width: 100%; min-height: 200px; background: #f9f9f9; border-radius: 4px; padding: 8px; overflow-y: auto;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Resumen</h6>
+                  <div id="resumenPrecios">
+                    <p class="text-muted small">Cargando...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Tabla detallada</h6>
+                  <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover" id="tablaPreciosComparativa">
+                      <thead class="bg-light sticky-top">
+                        <tr>
+                          <th style="width: 25%;">Proveedor</th>
+                          <th style="width: 12%;">Tipo</th>
+                          <th style="width: 18%;" class="text-right">Rango qty.</th>
+                          <th style="width: 18%;" class="text-right">Precio unit.</th>
+                          <th style="width: 15%; display:none;" id="headerCostoTotal" class="text-right">Costo total</th>
+                          <th style="width: 12%;">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody id="bodyTablaPreciosComparativa">
+                        <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Registrar nuevo precio</h6>
+                  <form id="formNuevoPrecio">
+                    <input type="hidden" id="campoArticuloCodigo">
+                    <div class="form-row">
+                      <div class="form-group col-sm-4">
+                        <label class="small">Proveedor</label>
+                        <select class="form-control form-control-sm" id="campoProveedorPrecio" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-sm-2">
+                        <label class="small">Cant. mín.</label>
+                        <input type="number" class="form-control form-control-sm" id="campoCantidadMinimaP" min="1" step="1" required>
+                      </div>
+                      <div class="form-group col-sm-2">
+                        <label class="small">Cant. máx.</label>
+                        <input type="number" class="form-control form-control-sm" id="campoCantidadMaximaP" min="1" step="1">
+                      </div>
+                      <div class="form-group col-sm-3">
+                        <label class="small">Precio unitario</label>
+                        <input type="number" class="form-control form-control-sm" id="campoPrecioUnitarioP" min="0.01" step="0.01" required>
+                      </div>
+                      <div class="form-group col-sm-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-primary btn-block">Agregar</button>
+                      </div>
+                    </div>
+                  </form>
+                  <div id="alertaNuevoPrecio" class="alert alert-sm mt-2 d-none" role="alert"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== Modal: alta / edición de artículo ============================== -->
+  <div class="modal fade" id="modalArticulo" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <form id="formArticulo">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tituloModalArticulo">Nuevo artículo</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger d-none" id="errorArticulo"></div>
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label>Código *</label>
+                <input type="text" class="form-control" id="campoCodigo" required maxlength="20">
+              </div>
+              <div class="form-group col-md-8">
+                <label>Nombre *</label>
+                <input type="text" class="form-control" id="campoNombre" required maxlength="250">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <input type="text" class="form-control" id="campoDescripcion" maxlength="500">
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-3">
+                <label>Categoría *</label>
+                <select class="form-control" id="campoCategoria" required></select>
+              </div>
+              <div class="form-group col-md-3">
+                <label>Unidad *</label>
+                <select class="form-control" id="campoUnidad" required></select>
+              </div>
+              <div class="form-group col-md-3">
+                <label>Almacén *</label>
+                <select class="form-control" id="campoAlmacen" required></select>
+              </div>
+              <div class="form-group col-md-3">
+                <label>Estado</label>
+                <select class="form-control" id="campoEstado"></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label>Stock actual *</label>
+                <input type="number" step="0.001" min="0" class="form-control" id="campoStockActual" required>
+              </div>
+              <div class="form-group col-md-4">
+                <label>Stock mínimo *</label>
+                <input type="number" step="0.001" min="0" class="form-control" id="campoStockMinimo" required>
+              </div>
+              <div class="form-group col-md-4">
+                <label>Stock máximo</label>
+                <input type="number" step="0.001" min="0" class="form-control" id="campoStockMaximo">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script>Auth.exigirSesion("mtto");</script>
+  <script src="js/mtto-api.js"></script>
+  <script src="js/mtto-precios.js"></script>
+  <script src="js/mtto-inventario.js"></script>
+</body>
+</html>

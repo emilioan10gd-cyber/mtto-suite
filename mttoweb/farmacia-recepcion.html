@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Recepción</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Recepción central — Farmacia</h3>
+              <p class="text-muted mb-0">
+                Da de alta la COM (Constancia/Orden de Compra) autorizada con su detalle, y recibe
+                mercancía contra ella para ver el % de surtimiento real (lo que llegó contra lo autorizado).
+              </p>
+              <p id="estadoCarga"></p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <!-- Alta de COM -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Nueva COM</h4>
+                  <div class="alert alert-danger d-none" id="errorCom"></div>
+                  <div class="alert alert-success d-none" id="exitoCom"></div>
+                  <form id="formCom">
+                    <div class="form-row">
+                      <div class="form-group col-md-7">
+                        <label class="small mb-1">Número de COM *</label>
+                        <input type="text" class="form-control form-control-sm" id="comNumero" required maxlength="40">
+                      </div>
+                      <div class="form-group col-md-5">
+                        <label class="small mb-1">Fecha del documento</label>
+                        <input type="date" class="form-control form-control-sm" id="comFecha">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="small mb-1">Proveedor</label>
+                      <select class="form-control form-control-sm" id="comProveedor">
+                        <option value="">(Sin especificar)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="small mb-1">Observaciones</label>
+                      <input type="text" class="form-control form-control-sm" id="comObservaciones" maxlength="500">
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-2">Detalle: claves autorizadas</h6>
+                    <div class="form-row align-items-end">
+                      <div class="form-group col-md-6 mb-2">
+                        <label class="small mb-1">Código</label>
+                        <input type="text" class="form-control form-control-sm" id="detalleCodigo"
+                               list="listaCodigosRecepcion" autocomplete="off">
+                        <datalist id="listaCodigosRecepcion"></datalist>
+                      </div>
+                      <div class="form-group col-md-4 mb-2">
+                        <label class="small mb-1">Cantidad autorizada</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="detalleCantidad">
+                      </div>
+                      <div class="form-group col-md-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-block" id="btnAgregarDetalle">+</button>
+                      </div>
+                    </div>
+                    <div class="table-responsive mb-2" id="wrapDetalleCom" style="display:none;">
+                      <table class="table table-sm">
+                        <thead><tr><th>Código</th><th class="text-right">Cantidad</th><th></th></tr></thead>
+                        <tbody id="tablaDetalleCom"></tbody>
+                      </table>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar COM</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recepción -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Recibir mercancía</h4>
+                  <div class="alert alert-danger d-none" id="errorRecepcion"></div>
+                  <div class="alert alert-success d-none" id="exitoRecepcion"></div>
+                  <form id="formRecepcion">
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">COM (opcional)</label>
+                        <input type="text" class="form-control form-control-sm" id="recepcionCom"
+                               list="listaComs" autocomplete="off" placeholder="Déjalo vacío si no aplica">
+                        <datalist id="listaComs"></datalist>
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">Código *</label>
+                        <input type="text" class="form-control form-control-sm" id="recepcionCodigo"
+                               list="listaCodigosRecepcion" required autocomplete="off">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-5">
+                        <label class="small mb-1">Número de lote *</label>
+                        <input type="text" class="form-control form-control-sm" id="recepcionLote" required maxlength="60">
+                      </div>
+                      <div class="form-group col-md-4">
+                        <label class="small mb-1">Caducidad</label>
+                        <input type="date" class="form-control form-control-sm" id="recepcionCaducidad">
+                      </div>
+                      <div class="form-group col-md-3">
+                        <label class="small mb-1">Cantidad *</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="recepcionCantidad" required>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="small mb-1">Responsable</label>
+                      <input type="text" class="form-control form-control-sm" id="recepcionResponsable" maxlength="120">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Registrar recepción</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Avance de surtimiento -->
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Avance de surtimiento por COM</h4>
+                    <div class="form-inline">
+                      <input type="text" class="form-control form-control-sm mr-2" id="filtroCom" placeholder="Filtrar por número de COM">
+                      <button type="button" class="btn btn-sm btn-outline-primary" id="btnFiltrarCom">Buscar</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>COM</th><th>Fecha</th><th>Proveedor</th><th>Código</th><th>Medicamento</th>
+                          <th class="text-right">Autorizado</th><th class="text-right">Recibido</th>
+                          <th class="text-right">Pendiente</th><th style="width:160px;">% surtido</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaAvanceCompra">
+                        <tr><td colspan="9">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-recepcion.js?v=1"></script>
+</body>
+</html>

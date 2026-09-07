@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Almacén Central · Etiquetas</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    /* ── Tokens (mismos que el resto del módulo Almacén) ────────────── */
+    :root {
+      --etq-brand:      #5b4fcf;
+      --etq-brand-tint: #f4f3fd;
+      --etq-danger:     #c0392b;
+      --etq-ink:        #1f2430;
+      --etq-muted:      #6c757d;
+      --etq-border:     #e3e5ec;
+      --etq-radius:     10px;
+      --etq-radius-sm:  7px;
+      --etq-shadow:     0 2px 10px rgba(31,36,48,.06);
+    }
+    .card { border:1px solid var(--etq-border); box-shadow: var(--etq-shadow); border-radius: var(--etq-radius); }
+    .seccion-eyebrow {
+      font-size:.68rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+      color: var(--etq-muted); display:flex; align-items:center; gap:6px;
+    }
+    .seccion-eyebrow i { font-size:.95rem; color: var(--etq-brand); }
+
+    /* ── Layout etiquetas ────────────────────────────────────────────── */
+    .etiqueta-preview {
+      position: relative;
+      border: 1px dashed #bbb;
+      border-radius: 3px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 6px 4px;
+      text-align: center;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .etq-sm { width: 70mm;  min-height: 32mm; }
+    .etq-md { width: 90mm;  min-height: 46mm; }
+
+    .etiqueta-preview .e-clave  { font-family: monospace; font-size: 7.5px; color: #5b4fcf; font-weight: 700; letter-spacing: .3px; }
+    .etiqueta-preview .e-nombre { font-size: 7px; line-height: 1.2; color: #1f2430; max-height: 2.6em; overflow: hidden; margin: 1px 0 2px; }
+    .etiqueta-preview .e-lote   { font-size: 7px; font-weight: 600; color: #333; }
+    .etiqueta-preview .e-cad    { font-size: 6.5px; color: #c0392b; }
+    .etiqueta-preview .e-code   { margin-top: 3px; line-height: 0; }
+    .etiqueta-preview svg       { display: block; max-width: 100%; }
+
+    /* Área de preview en pantalla */
+    #areaEtiquetas { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* Selector de formato */
+    .fmt-btn { cursor: pointer; }
+    .fmt-btn.active { background: var(--etq-brand); color: #fff; border-color: var(--etq-brand); }
+
+    /* Artículo ya agregado a la lista de etiquetas: se marca para no
+       hacer clic dos veces por accidente pensando que no funcionó. */
+    #listaArticulos .list-group-item-action.ya-agregado {
+      background: var(--etq-brand-tint); border-left: 3px solid var(--etq-brand);
+    }
+    #listaArticulos .list-group-item-action.ya-agregado .chk-agregado { display:inline-flex; }
+    .chk-agregado {
+      display:none; align-items:center; justify-content:center; width:16px; height:16px;
+      border-radius:50%; background: var(--etq-brand); color:#fff; font-size:10px; flex-shrink:0;
+    }
+
+    #btnLimpiar { min-width:44px; min-height:44px; }
+
+    /* Panel de selección de lotes: se abre debajo del artículo al hacer
+       clic, en vez de agregar todo a ciegas. */
+    .lotes-panel { background:#fafafd; border-top:1px solid var(--etq-border); border-bottom:1px solid var(--etq-border); }
+    .lote-check-row {
+      display:flex; align-items:center; gap:8px; padding:.35rem .75rem; margin:0;
+      font-size:.72rem; cursor:pointer;
+    }
+    .lote-check-row:hover { background:#f0f0f7; }
+    .lote-check-row.ya-en-lista { color: var(--etq-muted); cursor:default; }
+    .lote-check-row input[disabled] { cursor:default; }
+
+    /* Controles sobre cada tarjeta de la vista previa (cantidad / quitar) */
+    .e-controles {
+      display:flex; align-items:center; justify-content:space-between; width:100%;
+      margin-bottom:3px; gap:2px;
+    }
+    .e-ctrl-btn {
+      width:16px; height:16px; border:1px solid var(--etq-border); background:#fff; border-radius:3px;
+      font-size:9px; line-height:1; padding:0; display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer; color: var(--etq-brand);
+    }
+    .e-ctrl-n {
+      font-size:9px; font-weight:700; width:26px; text-align:center;
+      border:1px solid var(--etq-border); border-radius:3px; padding:1px 0; -moz-appearance:textfield;
+    }
+    .e-ctrl-n::-webkit-outer-spin-button, .e-ctrl-n::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+    .e-ctrl-quitar {
+      width:16px; height:16px; border:none; background:none; color: var(--etq-danger);
+      font-size:10px; line-height:1; padding:0; cursor:pointer; margin-left:auto;
+    }
+
+    @media print {
+      /* ocultar toda la shell */
+      .no-print,
+      .navbar,
+      .sidebar,
+      .footer,
+      .col-md-4,           /* panel de búsqueda */
+      .card-header,
+      h3, .small           /* título y subtítulo */
+        { display: none !important; }
+
+      body, .container-scroller, .container-fluid,
+      .page-body-wrapper, .main-panel, .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        width: 100% !important;
+      }
+
+      /* mostrar solo el panel de etiquetas */
+      .col-md-8 { width: 100% !important; max-width: 100% !important; flex: none !important; }
+      .card { border: none !important; box-shadow: none !important; }
+      .card-body { padding: 0 !important; }
+
+      #areaEtiquetas {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 4mm;
+        padding: 2mm;
+      }
+      .etiqueta-preview { border-color: #ccc; }
+      @page { size: letter portrait; margin: 0.25in; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <div id="navbarInyectado"></div>
+    <div class="container-fluid page-body-wrapper">
+      <!-- Sidebar -->
+      <div id="sidebarInyectado"></div>
+      <!-- /Sidebar -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+
+          <!-- Encabezado y controles -->
+          <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+            <div>
+              <h3 class="mb-1 font-weight-bold">Etiquetas</h3>
+              <p class="text-muted mb-0 small">Elige artículos de la lista y genera etiquetas para impresión.</p>
+            </div>
+            <div class="d-flex align-items-center" style="gap:8px">
+              <!-- Selector de formato -->
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary fmt-btn" id="btnFmtQr" title="Código QR">
+                  <i class="typcn typcn-qr-code mr-1"></i>QR
+                </button>
+                <button type="button" class="btn btn-outline-primary fmt-btn active" id="btnFmtBarra" title="Código de barras (scanner)">
+                  <i class="typcn typcn-sort-alphabetically mr-1"></i>Barras
+                </button>
+              </div>
+              <!-- Selector de tamaño -->
+              <select class="form-control form-control-sm" id="selTamano" style="width:auto">
+                <option value="sm">Pequeña (70×32mm)</option>
+                <option value="md">Mediana (90×46mm)</option>
+              </select>
+              <!-- Acciones -->
+              <button class="btn btn-sm btn-outline-secondary" id="btnLimpiar">
+                <i class="typcn typcn-trash"></i>
+              </button>
+              <button class="btn btn-sm btn-primary" onclick="window.print()">
+                <i class="typcn typcn-print mr-1"></i>Imprimir (<span id="conteoEtiquetas">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Búsqueda + lista + preview. OJO: esta fila NO lleva "no-print" —
+               contiene la vista previa, que es justo lo que sí se imprime.
+               Lo que no debe imprimirse (buscador, controles) ya se oculta
+               por su cuenta más abajo (.col-md-4, .card-header, etc). -->
+          <div class="row">
+            <!-- Panel izquierdo: búsqueda -->
+            <div class="col-md-4 grid-margin no-print">
+              <div class="card">
+                <div class="card-header py-2">
+                  <div class="seccion-eyebrow"><i class="typcn typcn-clipboard"></i>Seleccionar artículos</div>
+                </div>
+                <div class="card-body py-2 px-3">
+                  <div class="input-group input-group-sm mb-2">
+                    <input type="search" class="form-control" id="filtroQ" placeholder="Clave o nombre...">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-secondary" id="btnBuscar" type="button">
+                        <i class="typcn typcn-zoom"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="soloConExistencia" checked>
+                    <label class="form-check-label small" for="soloConExistencia">Solo con existencia</label>
+                  </div>
+                </div>
+                <div style="max-height:460px;overflow-y:auto">
+                  <div class="list-group list-group-flush" id="listaArticulos">
+                    <div class="list-group-item text-muted small">Buscando…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel derecho: preview etiquetas -->
+            <div class="col-md-8 grid-margin">
+              <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                  <div class="seccion-eyebrow"><i class="typcn typcn-tags"></i>Vista previa</div>
+                  <span class="badge badge-secondary" id="badgeCuenta">0 etiquetas</span>
+                </div>
+                <div class="card-body" id="areaEtiquetas" style="min-height:200px">
+                  <p class="text-muted small">Haz clic en un artículo para agregar sus lotes. Haz clic en una etiqueta para quitarla.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content-wrapper -->
+        <footer class="footer no-print"><span class="text-muted">Almacén Central · HGR Reynosa</span></footer>
+      </div><!-- /main-panel -->
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/almacen-api.js"></script>
+  <script src="vendors/qrcode/qrcode.min.js"></script>
+  <script src="js/mtto-barcode.js"></script>
+  <script>
+  (function () {
+    function esc(t) { const d = document.createElement("div"); d.textContent = t ?? ""; return d.innerHTML; }
+    const fmtFecha = (s) => s ? new Date(s).toLocaleDateString("es-MX") : "Sin fecha";
+    const BASE_URL = location.origin + location.pathname.replace("almacen-etiquetas.html", "");
+
+    // Estado actual — barras como default (tienen scanner USB)
+    let formato  = "barra"; // "qr" | "barra"
+    let tamano   = "sm";   // "sm" | "md"
+    const items  = [];     // { art, lote }
+
+    // ── Generadores de código ──────────────────────────────────────────
+    function svgQr(clave, lote) {
+      const params = `clave=${encodeURIComponent(clave)}&lote=${encodeURIComponent(lote || "")}`;
+      const url = `${BASE_URL}almacen-movimientos.html?${params}`;
+      try {
+        const qr = qrcode(0, "M");
+        qr.addData(url);
+        qr.make();
+        const size = tamano === "sm" ? 2 : 3;
+        return qr.createSvgTag({ cellSize: size, margin: 2 });
+      } catch (e) {
+        return `<span style="font-size:6px">${esc(clave)}${lote ? "/" + lote : ""}</span>`;
+      }
+    }
+
+    function svgBarra(clave, lote) {
+      try {
+        // Formato: CLAVE|LOTE (para que el escáner capture ambos)
+        const codigoFull = lote && lote !== "—" ? `${clave}|${lote}` : clave;
+        const alto = tamano === "sm" ? 28 : 38;
+        return MttoBarcode.svg(codigoFull, { moduloPx: tamano === "sm" ? 1.1 : 1.4, altoPx: alto, margenPx: 4 });
+      } catch (e) {
+        return `<span style="font-size:6px">${esc(clave)}${lote ? "/" + lote : ""}</span>`;
+      }
+    }
+
+    // ── Construir etiqueta DOM ─────────────────────────────────────────
+    // editable=true: la tarjeta de trabajo, con controles de cantidad y
+    // quitar (nunca se imprimen, van marcados .no-print).
+    // editable=false: la copia "física" tal cual sale en el papel — se usa
+    // para expandir cada línea a N copias justo antes de imprimir.
+    function buildEtiqueta(art, lote, index, editable) {
+      const div = document.createElement("div");
+      div.className = `etiqueta-preview etq-${tamano}`;
+      const codeSvg = formato === "qr"
+        ? svgQr(art.clave, lote.lote && lote.lote !== "—" ? lote.lote : "")
+        : svgBarra(art.clave, lote.lote && lote.lote !== "—" ? lote.lote : "");
+      const nombreCorto = art.nombre.length > 60 ? art.nombre.substring(0, 58) + "…" : art.nombre;
+      const loteTxt = lote.lote && lote.lote !== "—" ? `Lote: ${lote.lote}` : "";
+      const cadTxt  = lote.caducidad ? `Cad: ${fmtFecha(lote.caducidad)}` : "";
+      const controles = editable ? `
+        <div class="e-controles no-print" data-controles>
+          <button type="button" class="e-ctrl-btn" data-cant-dec="${index}" aria-label="Menos copias" title="Menos copias">−</button>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" class="e-ctrl-n" data-cant-input="${index}"
+                 value="${items[index].cantidad}" aria-label="Cantidad de copias de ${esc(art.clave)}" title="Escribe la cantidad de copias">
+          <button type="button" class="e-ctrl-btn" data-cant-inc="${index}" aria-label="Más copias" title="Más copias">+</button>
+          <button type="button" class="e-ctrl-quitar" data-quitar="${index}" aria-label="Quitar etiqueta de ${esc(art.clave)}" title="Quitar">✕</button>
+        </div>` : "";
+      div.innerHTML = `
+        ${controles}
+        <div class="e-clave">${esc(art.clave)}</div>
+        <div class="e-nombre">${esc(nombreCorto)}</div>
+        ${loteTxt ? `<div class="e-lote">${esc(loteTxt)}</div>` : ""}
+        ${cadTxt  ? `<div class="e-cad">${esc(cadTxt)}</div>`  : ""}
+        <div class="e-code">${codeSvg}</div>
+      `;
+      return div;
+    }
+
+    // Total de copias (badge + botón "Imprimir"), aparte de renderizar()
+    // para poder refrescarlo mientras se teclea una cantidad sin reconstruir
+    // toda la grilla de tarjetas (eso le quitaría el foco al input a medio
+    // escribir "1000").
+    function actualizarTotales() {
+      const totalCopias = items.reduce((s, it) => s + it.cantidad, 0);
+      document.getElementById("conteoEtiquetas").textContent = totalCopias;
+      document.getElementById("badgeCuenta").textContent =
+        totalCopias + (totalCopias === 1 ? " etiqueta" : " etiquetas") +
+        (items.length !== totalCopias ? ` (${items.length} ${items.length === 1 ? "artículo/lote" : "artículos/lotes"})` : "");
+    }
+
+    // ── Render completo (vista de trabajo: 1 tarjeta por línea, con su
+    //    cantidad de copias marcada — no una tarjeta por copia física) ──
+    function renderizar() {
+      const area = document.getElementById("areaEtiquetas");
+      area.innerHTML = "";
+      if (!items.length) {
+        area.innerHTML = '<p class="text-muted small">Haz clic en un artículo para agregar sus lotes.</p>';
+      } else {
+        items.forEach(({ art, lote }, i) => area.appendChild(buildEtiqueta(art, lote, i, true)));
+      }
+      actualizarTotales();
+      marcarSeleccionados();
+    }
+
+    // Controles de cada tarjeta: +/- cantidad, escribirla directo, y quitar
+    // la línea completa. Escribir a mano es lo que de verdad importa cuando
+    // se necesitan cientos de copias — nadie va a hacerle clic al "+" 1000
+    // veces.
+    document.getElementById("areaEtiquetas").addEventListener("click", (e) => {
+      const inc = e.target.closest("[data-cant-inc]");
+      if (inc) { items[+inc.getAttribute("data-cant-inc")].cantidad += 1; renderizar(); return; }
+      const dec = e.target.closest("[data-cant-dec]");
+      if (dec) {
+        const it = items[+dec.getAttribute("data-cant-dec")];
+        it.cantidad = Math.max(1, it.cantidad - 1);
+        renderizar();
+        return;
+      }
+      const quitar = e.target.closest("[data-quitar]");
+      if (quitar) { items.splice(+quitar.getAttribute("data-quitar"), 1); renderizar(); }
+    });
+
+    // Mientras se escribe: solo dígitos (se descarta cualquier otra tecla) y
+    // se refresca nada más el total, sin reconstruir la grilla, para no
+    // perder el cursor a medio número.
+    document.getElementById("areaEtiquetas").addEventListener("input", (e) => {
+      const campo = e.target.closest("[data-cant-input]");
+      if (!campo) return;
+      const limpio = campo.value.replace(/[^0-9]/g, "");
+      if (limpio !== campo.value) campo.value = limpio;
+      const idx = +campo.getAttribute("data-cant-input");
+      items[idx].cantidad = limpio === "" ? 0 : parseInt(limpio, 10);
+      actualizarTotales();
+    });
+
+    // Al salir del campo (clic afuera o Tab) se corrige: mínimo 1, y si
+    // quedó vacío o en 0 vuelve a 1 en vez de dejar una etiqueta fantasma
+    // sin copias.
+    document.getElementById("areaEtiquetas").addEventListener("focusout", (e) => {
+      const campo = e.target.closest("[data-cant-input]");
+      if (!campo) return;
+      const idx = +campo.getAttribute("data-cant-input");
+      if (!items[idx]) return;
+      items[idx].cantidad = Math.max(1, items[idx].cantidad || 0);
+      campo.value = items[idx].cantidad;
+      actualizarTotales();
+    });
+
+    // Enter confirma el número y quita el foco (mismo efecto que Tab).
+    document.getElementById("areaEtiquetas").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.target.closest("[data-cant-input]")) {
+        e.preventDefault();
+        e.target.blur();
+      }
+    });
+
+    // Los artículos que ya tienen al menos una etiqueta en la vista previa
+    // se marcan en la lista, para no hacer clic dos veces pensando que la
+    // primera vez no funcionó.
+    function marcarSeleccionados() {
+      const idsAgregados = new Set(items.map(it => it.art.id));
+      document.querySelectorAll("#listaArticulos [data-art-id]").forEach(el => {
+        el.classList.toggle("ya-agregado", idsAgregados.has(+el.getAttribute("data-art-id")));
+      });
+    }
+
+    // ── Agregar artículo ───────────────────────────────────────────────
+    // Cada lote entra con cantidad=1: cuántas copias de esa etiqueta se
+    // necesitan es algo que se ajusta después con los +/- de la tarjeta,
+    // no algo que se sepa de antemano al elegir el artículo.
+    async function agregarArticulo(art) {
+      try {
+        const lotes = await AlmacenApi.lotes.porArticulo(art.id, { soloConExistencia: true });
+        const fuente = lotes.length ? lotes : [{ lote: "—", caducidad: null }];
+        fuente.forEach(l => items.push({ art, lote: l, cantidad: 1 }));
+        renderizar();
+      } catch (err) {
+        alert("Error cargando lotes: " + err.message);
+      }
+    }
+
+    // ── Imprimir: justo antes de imprimir se expande cada línea a sus N
+    // copias reales (la vista de trabajo solo muestra 1 tarjeta por línea
+    // con un contador, no N tarjetas repetidas). Al terminar se regresa a
+    // la vista editable. beforeprint/afterprint cubren tanto el botón
+    // "Imprimir" como Ctrl+P, así no hay que duplicar la lógica.
+    window.addEventListener("beforeprint", () => {
+      const area = document.getElementById("areaEtiquetas");
+      area.innerHTML = "";
+      items.forEach(({ art, lote, cantidad }) => {
+        for (let i = 0; i < cantidad; i++) area.appendChild(buildEtiqueta(art, lote, 0, false));
+      });
+    });
+    window.addEventListener("afterprint", renderizar);
+
+    // ── Elegir lotes de un artículo ──────────────────────────────────────
+    // Antes: un clic agregaba TODOS los lotes, y volver a hacer clic los
+    // duplicaba. Ahora: un clic abre un selector con los lotes de ese
+    // artículo (marcados los que aún no están en la lista) para elegir
+    // exactamente cuáles se necesitan, y nunca se duplica un (artículo,lote)
+    // que ya esté agregado.
+    function yaAgregado(artId, loteNombre) {
+      return items.some(it => it.art.id === artId && it.lote.lote === loteNombre);
+    }
+
+    async function togglePanelLotes(id) {
+      const panel = document.querySelector(`[data-panel="${id}"]`);
+      if (!panel) return;
+      const abierto = !panel.classList.contains("d-none");
+      // Cerrar cualquier otro panel abierto: uno a la vez, menos ruido.
+      document.querySelectorAll(".lotes-panel").forEach(p => p.classList.add("d-none"));
+      if (abierto) return; // ya estaba abierto: el toggle de arriba lo cerró
+
+      panel.classList.remove("d-none");
+      if (panel.dataset.cargado) return;
+      panel.dataset.cargado = "1";
+
+      const art = window._artMap[id];
+      panel.innerHTML = `<div class="text-muted small px-2 py-1">Cargando lotes…</div>`;
+      try {
+        const lotes = await AlmacenApi.lotes.porArticulo(id, { soloConExistencia: true });
+        const fuente = lotes.length ? lotes : [{ lote: "—", caducidad: null, cantidad: null }];
+        window._loteMap = window._loteMap || {};
+        window._loteMap[id] = fuente;
+
+        panel.innerHTML = `
+          <div class="lotes-lista">
+            ${fuente.map((l, i) => {
+              const yaEsta = yaAgregado(id, l.lote);
+              return `<label class="lote-check-row ${yaEsta ? "ya-en-lista" : ""}">
+                <input type="checkbox" data-lote-chk="${id}:${i}" ${yaEsta ? "disabled" : "checked"}>
+                <span>${l.lote && l.lote !== "—" ? esc(l.lote) : "Sin lote"}${l.caducidad ? " · vence " + fmtFecha(l.caducidad) : ""}</span>
+                ${yaEsta ? '<span class="small text-muted ml-auto">ya agregado</span>' : ""}
+              </label>`;
+            }).join("")}
+          </div>
+          <div class="d-flex justify-content-between px-2 py-1" style="gap:6px">
+            <button type="button" class="btn btn-xs btn-outline-secondary" data-cancelar-lotes="${id}">Cancelar</button>
+            <button type="button" class="btn btn-xs btn-primary" data-agregar-lotes="${id}">Agregar seleccionados</button>
+          </div>`;
+      } catch (err) {
+        panel.innerHTML = `<div class="text-danger small px-2 py-1">Error: ${esc(err.message)}</div>`;
+      }
+    }
+
+    document.getElementById("listaArticulos").addEventListener("click", (e) => {
+      const toggle = e.target.closest("[data-toggle-lotes]");
+      if (toggle) { togglePanelLotes(+toggle.getAttribute("data-toggle-lotes")); return; }
+
+      const cancelar = e.target.closest("[data-cancelar-lotes]");
+      if (cancelar) {
+        document.querySelector(`[data-panel="${cancelar.getAttribute("data-cancelar-lotes")}"]`)?.classList.add("d-none");
+        return;
+      }
+
+      const agregar = e.target.closest("[data-agregar-lotes]");
+      if (agregar) {
+        const id = +agregar.getAttribute("data-agregar-lotes");
+        const art = window._artMap[id];
+        const fuente = window._loteMap[id] || [];
+        const panel = document.querySelector(`[data-panel="${id}"]`);
+        panel.querySelectorAll(`[data-lote-chk^="${id}:"]:checked`).forEach(chk => {
+          const idx = +chk.getAttribute("data-lote-chk").split(":")[1];
+          const lote = fuente[idx];
+          if (!yaAgregado(id, lote.lote)) items.push({ art, lote, cantidad: 1 });
+        });
+        panel.classList.add("d-none");
+        renderizar();
+      }
+    });
+
+    // ── Búsqueda ───────────────────────────────────────────────────────
+    async function buscar() {
+      const q  = document.getElementById("filtroQ").value.trim() || undefined;
+      const ce = document.getElementById("soloConExistencia").checked;
+      const lista = document.getElementById("listaArticulos");
+      lista.innerHTML = "<div class='list-group-item text-muted small'>Buscando…</div>";
+      try {
+        const data = await AlmacenApi.inventario.listar({ q, soloConExistencia: ce ? true : undefined, soloActivos: true, tamano: 80 });
+        window._artMap = {};
+        (data.datos || []).forEach(a => { window._artMap[a.id] = a; });
+
+        lista.innerHTML = data.datos && data.datos.length
+          ? data.datos.map(a => `
+              <div>
+                <button type="button" class="list-group-item list-group-item-action py-1" data-art-id="${a.id}" data-toggle-lotes="${a.id}">
+                  <div class="d-flex justify-content-between align-items-center" style="gap:6px">
+                    <span style="font-family:monospace;font-size:.7rem;color:#5b4fcf">${esc(a.clave)}</span>
+                    <span class="chk-agregado"><i class="typcn typcn-tick"></i></span>
+                    <span class="badge badge-light ml-auto" style="font-size:.65rem">${new Intl.NumberFormat("es-MX").format(a.stockActual)} ${esc(a.unidad)}</span>
+                  </div>
+                  <div style="font-size:.7rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.nombre)}</div>
+                </button>
+                <div class="lotes-panel d-none" data-panel="${a.id}"></div>
+              </div>`).join("")
+          : "<div class='list-group-item text-muted small'>Sin resultados</div>";
+        marcarSeleccionados();
+      } catch (err) {
+        lista.innerHTML = `<div class='list-group-item text-danger small'>${esc(err.message)}</div>`;
+      }
+    }
+
+    // ── Controles ──────────────────────────────────────────────────────
+    document.getElementById("btnFmtQr").addEventListener("click", () => {
+      formato = "qr";
+      document.getElementById("btnFmtQr").classList.add("active");
+      document.getElementById("btnFmtBarra").classList.remove("active");
+      if (items.length) renderizar();
+    });
+
+    document.getElementById("btnFmtBarra").addEventListener("click", () => {
+      formato = "barra";
+      document.getElementById("btnFmtBarra").classList.add("active");
+      document.getElementById("btnFmtQr").classList.remove("active");
+      if (items.length) renderizar();
+    });
+
+    document.getElementById("selTamano").addEventListener("change", function () {
+      tamano = this.value;
+      if (items.length) renderizar();
+    });
+
+    document.getElementById("btnBuscar").addEventListener("click", buscar);
+    document.getElementById("filtroQ").addEventListener("keydown", (e) => { if (e.key === "Enter") buscar(); });
+    let debounceBuscar = null;
+    document.getElementById("filtroQ").addEventListener("input", () => {
+      clearTimeout(debounceBuscar);
+      debounceBuscar = setTimeout(buscar, 350);
+    });
+    document.getElementById("soloConExistencia").addEventListener("change", buscar);
+
+    document.getElementById("btnLimpiar").addEventListener("click", () => {
+      items.length = 0;
+      renderizar();
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", (e) => { e.preventDefault(); Auth.logout(); });
+
+    // Pre-fill desde URL: ?id=123 agrega ese artículo directo
+    const urlP = new URLSearchParams(location.search);
+    if (urlP.get("id")) {
+      Auth.exigirSesion("almacen").then(async s => {
+        if (!s) return;
+        try {
+          const art = await AlmacenApi.inventario.obtener(parseInt(urlP.get("id"), 10));
+          if (art) agregarArticulo(art);
+        } catch { /* no encontrado */ }
+        buscar();
+      });
+    } else {
+      Auth.exigirSesion("almacen").then(s => { if (s) buscar(); });
+    }
+  })();
+  </script>
+</body>
+</html>

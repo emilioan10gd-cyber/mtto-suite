@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test API</title>
+</head>
+<body>
+  <h1>Test API Response</h1>
+  <pre id="response"></pre>
+  <script src="js/mtto-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cateter-api.js?v=17"></script>
+  <script>
+    (async () => {
+      try {
+        const datos = await CateterApi.dashboard.todo({ topBajoStock: 10, mesesHistorial: 12 });
+        document.getElementById('response').textContent = JSON.stringify(datos, null, 2);
+      } catch (err) {
+        document.getElementById('response').textContent = 'Error: ' + err.message;
+      }
+    })();
+  </script>
+</body>
+</html>

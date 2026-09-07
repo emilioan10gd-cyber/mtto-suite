@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Catálogos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Catálogos — Biomédico</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title">Áreas / Servicios</h4>
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" id="nuevaArea" placeholder="Nombre del área">
+                  <div class="input-group-append"><button class="btn btn-primary" id="btnAgregarArea">Agregar</button></div>
+                </div>
+                <ul class="list-group" id="listaAreas"></ul>
+              </div></div>
+            </div>
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title">Categorías de equipo</h4>
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" id="nuevaCategoriaEquipo" placeholder="Nombre de la categoría">
+                  <div class="input-group-append"><button class="btn btn-primary" id="btnAgregarCategoriaEquipo">Agregar</button></div>
+                </div>
+                <ul class="list-group" id="listaCategoriasEquipo"></ul>
+              </div></div>
+            </div>
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title">Categorías de insumo</h4>
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" id="nuevaCategoriaInsumo" placeholder="Nombre de la categoría">
+                  <div class="input-group-append"><button class="btn btn-primary" id="btnAgregarCategoriaInsumo">Agregar</button></div>
+                </div>
+                <ul class="list-group" id="listaCategoriasInsumo"></ul>
+              </div></div>
+            </div>
+          </div>
+
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-catalogos.js?v=1"></script>
+</body>
+</html>

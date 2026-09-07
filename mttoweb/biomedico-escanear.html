@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Biomédico · Escanear</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Escanear equipo — Biomédico</h3>
+              <p id="estadoCarga">Apunta la cámara a la etiqueta (QR o código de barras) del equipo.</p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <div id="cajaVideo" style="position:relative; background:#000; border-radius:6px; overflow:hidden; max-width:100%;">
+                  <video id="video" style="width:100%; display:block;" muted playsinline></video>
+                  <div id="marco" style="position:absolute; inset:10%; border:3px solid rgba(255,255,255,.6); border-radius:8px; pointer-events:none;"></div>
+                </div>
+                <div class="alert alert-danger d-none mt-3" id="errorCamara"></div>
+                <div class="alert alert-success d-none mt-3" id="exitoEscaneo"></div>
+                <div class="d-flex mt-3" style="gap:10px;">
+                  <button type="button" class="btn btn-primary" id="btnIniciar"><i class="typcn typcn-camera-outline"></i> Iniciar cámara</button>
+                  <button type="button" class="btn btn-outline-secondary d-none" id="btnDetener">Detener</button>
+                  <select class="form-control" id="fCamara" style="max-width:260px;"></select>
+                </div>
+              </div></div>
+
+              <div class="card grid-margin"><div class="card-body">
+                <h4 class="card-title">O escribe el código a mano</h4>
+                <p class="text-muted small">Útil si la cámara no abre (la mayoría de los celulares exigen conexión segura — https — para dar acceso a cámara) o si la etiqueta está dañada.</p>
+                <form id="formManual" class="form-inline">
+                  <input type="text" class="form-control mr-2 mb-2" id="fCodigoManual" placeholder="Ej. BIO-000187 o solo 187" style="min-width:220px;">
+                  <button type="submit" class="btn btn-primary mb-2">Buscar equipo</button>
+                </form>
+                <div class="alert alert-danger d-none mt-2" id="errorManual"></div>
+              </div></div>
+            </div>
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title">Cómo funciona</h4>
+                <ul class="pl-3 mb-0">
+                  <li>Funciona con las etiquetas <strong>QR</strong> y de <strong>código de barras</strong> que se imprimen desde <a href="biomedico-etiquetas.html">Etiquetas</a>.</li>
+                  <li>Al reconocer un código válido, te lleva directo al expediente de ese equipo — no hace falta salir de la app.</li>
+                  <li>El navegador va a pedir permiso de cámara la primera vez. En celular, usa la cámara trasera de preferencia.</li>
+                  <li>Si tu dispositivo tiene varias cámaras, puedes elegir cuál usar en el selector de abajo del video.</li>
+                  <li><strong>Si la cámara no abre</strong>, es casi seguro porque el navegador exige conexión segura (https) para dar acceso a cámara — usa el código a mano mientras tanto.</li>
+                </ul>
+              </div></div>
+            </div>
+          </div>
+
+        </div>
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/zxing/zxing.min.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("biomedico");</script>
+  <script src="js/biomedico-api.js?v=1"></script>
+  <script src="js/biomedico-escanear.js?v=1"></script>
+</body>
+</html>

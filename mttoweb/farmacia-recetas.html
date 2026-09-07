@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Recetas</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Recetas — Dispensación a paciente externo</h3>
+              <p class="text-muted mb-0">
+                Captura la receta con su detalle y dispénsala por FEFO. Si no hay existencia
+                suficiente, se entrega lo que hay y el faltante queda registrado como indicador de abasto.
+              </p>
+              <p id="estadoCarga"></p>
+            </div>
+          </div>
+
+          <!-- KPI de abasto del mes actual -->
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Recetas este mes</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiRecetas">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">% de abasto este mes</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiAbasto">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Líneas con faltante</h4>
+                <h2 class="font-weight-bold text-danger mb-0" id="kpiFaltante">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Prescrito vs. entregado</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiPrescritoEntregado">—</h2>
+              </div></div>
+            </div>
+          </div>
+
+          <div class="row mt-1">
+            <!-- Nueva receta -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Nueva receta</h4>
+                  <div class="alert alert-danger d-none" id="errorReceta"></div>
+                  <div class="alert alert-success d-none" id="exitoReceta"></div>
+                  <form id="formReceta">
+                    <div class="form-row">
+                      <div class="form-group col-md-7">
+                        <label class="small mb-1">Médico *</label>
+                        <input type="text" class="form-control form-control-sm" id="recetaMedico" required maxlength="150">
+                      </div>
+                      <div class="form-group col-md-5">
+                        <label class="small mb-1">Fecha</label>
+                        <input type="date" class="form-control form-control-sm" id="recetaFecha">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-7">
+                        <label class="small mb-1">Paciente *</label>
+                        <input type="text" class="form-control form-control-sm" id="recetaPaciente" required maxlength="150">
+                      </div>
+                      <div class="form-group col-md-5">
+                        <label class="small mb-1">Expediente</label>
+                        <input type="text" class="form-control form-control-sm" id="recetaExpediente" maxlength="40">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="small mb-1">Observaciones</label>
+                      <input type="text" class="form-control form-control-sm" id="recetaObservaciones" maxlength="500">
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-2">Detalle: claves prescritas</h6>
+                    <div class="form-row align-items-end">
+                      <div class="form-group col-md-6 mb-2">
+                        <label class="small mb-1">Código</label>
+                        <input type="text" class="form-control form-control-sm" id="detalleCodigo"
+                               list="listaCodigosReceta" autocomplete="off">
+                        <datalist id="listaCodigosReceta"></datalist>
+                      </div>
+                      <div class="form-group col-md-4 mb-2">
+                        <label class="small mb-1">Cantidad prescrita</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="detalleCantidad">
+                      </div>
+                      <div class="form-group col-md-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-block" id="btnAgregarDetalle">+</button>
+                      </div>
+                    </div>
+                    <div class="table-responsive mb-2" id="wrapDetalleReceta" style="display:none;">
+                      <table class="table table-sm">
+                        <thead><tr><th>Código</th><th class="text-right">Cantidad</th><th></th></tr></thead>
+                        <tbody id="tablaDetalleReceta"></tbody>
+                      </table>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar receta</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de recetas -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Recetas capturadas</h4>
+                    <div class="form-inline">
+                      <input type="text" class="form-control form-control-sm mr-2" id="filtroExpediente" placeholder="Expediente">
+                      <select class="form-control form-control-sm mr-2" id="filtroEstado">
+                        <option value="">Todos los estados</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Parcial">Parcial</option>
+                        <option value="Completa">Completa</option>
+                      </select>
+                      <button type="button" class="btn btn-sm btn-outline-primary" id="btnBuscarRecetas">Buscar</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Folio</th><th>Fecha</th><th>Paciente</th><th>Médico</th>
+                          <th class="text-right">Prescrito</th><th class="text-right">Entregado</th>
+                          <th>Estado</th><th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaRecetas">
+                        <tr><td colspan="8">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="small text-muted" id="resumenPagina"></span>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagAnterior">Anterior</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagSiguiente">Siguiente</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- ============================== Modal: detalle / dispensar ============================== -->
+  <div class="modal fade" id="modalReceta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Receta <span id="modalFolio"></span> — <span id="modalPaciente"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-sm mt-0 mb-3 d-none" id="alertaDispensar" role="alert"></div>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Código</th><th>Medicamento</th><th class="text-right">Prescrito</th>
+                  <th class="text-right">Entregado</th><th class="text-right">Pendiente</th>
+                  <th>Estado</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tablaDetalleModal">
+                <tr><td colspan="7">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="form-row align-items-end">
+            <div class="form-group col-md-6">
+              <label class="small mb-1">Responsable de la dispensación</label>
+              <input type="text" class="form-control form-control-sm" id="dispensarResponsable">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-recetas.js?v=1"></script>
+</body>
+</html>

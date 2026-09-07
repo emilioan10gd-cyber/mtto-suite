@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Clínica de Catéter · Catálogos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Catálogos — Clínica de Catéter</h3>
+              <p class="text-muted">
+                Lo que la clínica sí administra. La descripción del cuadro básico es
+                oficial y no se toca: aquí se le agrega una propia al lado cuando la
+                oficial no sirve para el día a día.
+              </p>
+            </div>
+          </div>
+
+          <ul class="nav nav-tabs mt-2" id="tabsCatalogos" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#tabDescripciones" role="tab">
+                <i class="typcn typcn-document-text"></i> Claves y descripciones
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#tabUbicaciones" role="tab">
+                <i class="typcn typcn-location"></i> Ubicaciones
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#tabListas" role="tab">
+                <i class="typcn typcn-th-list"></i> Categorías y tipos
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content border border-top-0 rounded-bottom bg-white p-3">
+            <!-- ================================ Claves y descripciones -->
+            <div class="tab-pane fade show active" id="tabDescripciones" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <p class="small text-muted mb-2 mr-3" style="max-width: 640px;">
+                  Cada clave que maneja la clínica, con la descripción oficial del CPM
+                  y la propia si alguien escribió una. Quitar la propia no borra nada
+                  del cuadro básico: solo deja de taparlo.
+                </p>
+                <input type="text" class="form-control mb-2" id="filtroDescripciones"
+                       placeholder="Filtrar por clave, nombre o descripción" style="max-width: 320px;">
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th style="width: 120px;">Clave</th>
+                      <th style="width: 110px;">Referencia</th>
+                      <th>Descripción oficial (CPM)</th>
+                      <th>Descripción propia</th>
+                      <th style="width: 150px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaDescripciones">
+                    <tr><td colspan="5">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <span class="small text-muted" id="resumenDescripciones"></span>
+            </div>
+
+            <!-- ================================================ Ubicaciones -->
+            <div class="tab-pane fade" id="tabUbicaciones" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <p class="small text-muted mb-2 mr-3" style="max-width: 640px;">
+                  Los orígenes y destinos que aparecen al registrar un movimiento.
+                  Dar de baja una ubicación no la borra —su historial se conserva—
+                  y no se permite si todavía guarda piezas.
+                </p>
+                <button type="button" class="btn btn-primary mb-2" id="btnNuevaUbicacion">
+                  <i class="typcn typcn-plus mr-1"></i>Nueva ubicación
+                </button>
+              </div>
+              <div id="alertaUbicaciones" class="alert d-none" role="alert"></div>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th style="width: 90px;">Código</th>
+                      <th>Nombre</th>
+                      <th>Descripción</th>
+                      <th style="width: 110px;">Tipo</th>
+                      <th style="width: 90px;">Estado</th>
+                      <th style="width: 180px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaUbicaciones">
+                    <tr><td colspan="6">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ========================================== Categorías y tipos -->
+            <div class="tab-pane fade" id="tabListas" role="tabpanel">
+              <p class="small text-muted">
+                Listas fijas del módulo. Se muestran para poder consultarlas; cambiarlas
+                afecta reglas de negocio, así que se ajustan desde la base de datos.
+              </p>
+              <div class="row">
+                <div class="col-md-4">
+                  <h6 class="font-weight-bold">Categorías</h6>
+                  <ul class="list-unstyled small" id="listaCategorias"><li>Cargando...</li></ul>
+                </div>
+                <div class="col-md-4">
+                  <h6 class="font-weight-bold">Tipos de movimiento</h6>
+                  <ul class="list-unstyled small" id="listaTipos"><li>Cargando...</li></ul>
+                </div>
+                <div class="col-md-4">
+                  <h6 class="font-weight-bold">Unidades de medida</h6>
+                  <ul class="list-unstyled small" id="listaUnidades"><li>Cargando...</li></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- ==================== Modal: descripción propia ==================== -->
+  <div class="modal fade" id="modalDescripcion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Descripción propia — <span id="descClave"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <form id="formDescripcion">
+          <div class="modal-body">
+            <label class="small mb-1 font-weight-bold">Descripción oficial del cuadro básico</label>
+            <p class="small text-muted border rounded p-2 bg-light" id="descOficial">—</p>
+
+            <label class="small mb-1 font-weight-bold" for="descPropia">Descripción propia</label>
+            <textarea class="form-control" id="descPropia" rows="4" maxlength="500"
+                      placeholder="Cómo le dicen en la clínica, o el detalle que la oficial no trae"></textarea>
+            <small class="form-text text-muted">
+              Déjala vacía y guarda para quitarla: la clave vuelve a mostrar la oficial.
+            </small>
+            <div id="alertaDescripcion" class="alert d-none mt-2" role="alert"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal: ubicación ==================== -->
+  <div class="modal fade" id="modalUbicacion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloModalUbicacion">Nueva ubicación</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <form id="formUbicacion">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="small mb-1" for="ubiNombre">Nombre *</label>
+              <input type="text" class="form-control" id="ubiNombre" maxlength="80" required
+                     placeholder="Ej. Salón de procedimientos">
+            </div>
+            <div class="form-group">
+              <label class="small mb-1" for="ubiDescripcion">Descripción</label>
+              <textarea class="form-control" id="ubiDescripcion" rows="2" maxlength="255"
+                        placeholder="Opcional"></textarea>
+            </div>
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" id="ubiEsAlmacen">
+                Es almacén (resguardo)
+                <i class="input-helper"></i>
+              </label>
+            </div>
+            <small class="form-text text-muted">
+              Marcado = material guardado. Sin marcar = disponible para uso inmediato,
+              como el stock de mostrador.
+            </small>
+            <div id="alertaModalUbicacion" class="alert d-none mt-2" role="alert"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("cateter");</script>
+  <script src="js/cateter-api.js?v=17"></script>
+  <script src="js/cateter-catalogos.js?v=12"></script>
+</body>
+</html>

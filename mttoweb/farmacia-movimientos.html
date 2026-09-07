@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Movimientos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <h3 class="mb-0 font-weight-bold">Movimientos — Farmacia</h3>
+                <p class="text-muted mb-0">
+                  Registra un movimiento sin tener que buscar antes el medicamento en Inventario.
+                </p>
+                <p id="estadoCarga">Cargando datos...</p>
+              </div>
+              <div>
+                <button type="button" class="btn btn-outline-secondary" id="btnExportar">
+                  <i class="typcn typcn-download mr-1"></i>Exportar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <!-- Formulario -->
+            <div class="col-lg-4 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Registrar movimiento</h4>
+                  <div class="alert alert-danger d-none" id="errorMovimiento"></div>
+                  <div class="alert alert-success d-none" id="exitoMovimiento"></div>
+                  <form id="formMovimiento">
+                    <div class="form-group">
+                      <label>Código *</label>
+                      <input class="form-control" id="campoCodigo" list="listaCodigos" required
+                             autocomplete="off" placeholder="Escanea, o escribe código o nombre…">
+                      <datalist id="listaCodigos"></datalist>
+                      <small class="form-text text-muted" id="codigoElegido">&nbsp;</small>
+                    </div>
+                    <div class="form-group">
+                      <label>Tipo de movimiento *</label>
+                      <select class="form-control" id="campoTipo" required>
+                        <option value="Salida">Salida (despacho a paciente/área)</option>
+                        <option value="Merma">Merma (caducado / dañado)</option>
+                        <option value="Entrada">Entrada</option>
+                        <option value="Ajuste (+)">Ajuste (+)</option>
+                        <option value="Ajuste (-)">Ajuste (-)</option>
+                      </select>
+                    </div>
+                    <div class="form-group d-none" id="grupoLote">
+                      <label>Lote *</label>
+                      <select class="form-control" id="campoLote"></select>
+                      <small class="form-text text-muted">
+                        Entrada y Ajuste (+) suman existencia: hay que decir a mano a qué lote se le
+                        agrega, porque FEFO solo tiene sentido para elegir de dónde sacar.
+                      </small>
+                    </div>
+                    <div class="form-group d-none" id="grupoDatosPaciente">
+                      <label>Paciente</label>
+                      <input type="text" class="form-control" id="campoPaciente" maxlength="150">
+                      <label class="mt-2">Expediente</label>
+                      <input type="text" class="form-control" id="campoExpediente" maxlength="40">
+                    </div>
+                    <div class="form-group d-none" id="grupoDatosClinicos">
+                      <label>Diagnóstico</label>
+                      <input type="text" class="form-control" id="campoDiagnostico" maxlength="255">
+                      <label class="mt-2">CIE</label>
+                      <input type="text" class="form-control" id="campoCie" maxlength="20">
+                      <label class="mt-2">Área / servicio</label>
+                      <input type="text" class="form-control" id="campoAreaServicio" maxlength="120">
+                    </div>
+                    <div class="form-group">
+                      <label>Cantidad *</label>
+                      <input type="number" step="0.001" min="0.001" class="form-control" id="campoCantidad" required>
+                    </div>
+                    <div class="form-group">
+                      <label>Responsable</label>
+                      <input type="text" class="form-control" id="campoResponsable" maxlength="120">
+                    </div>
+                    <div class="form-group">
+                      <label>Observaciones</label>
+                      <textarea class="form-control" id="campoObservaciones" maxlength="500" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Agregar a la lista</button>
+                  </form>
+
+                  <div class="alert alert-danger d-none mt-3" id="errorAgregando" role="alert"></div>
+                  <div class="alert alert-success d-none mt-3" id="exitoAgregando" role="alert"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cola de movimientos pendientes -->
+            <div class="col-lg-12 grid-margin stretch-card" id="seccionCola" style="display: none;">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Movimientos pendientes por guardar</h4>
+                    <span class="badge badge-info" id="contadorCola">0</span>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                      <thead>
+                        <tr>
+                          <th>Tipo</th>
+                          <th>Código</th>
+                          <th class="text-right">Cantidad</th>
+                          <th>Área/servicio</th>
+                          <th>Observaciones</th>
+                          <th class="text-center" style="width: 50px;">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaMovimientosPendientes">
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLimpiarCola">Limpiar todo</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnGuardarTodos">Guardar todos</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bitácora -->
+            <div class="col-lg-8 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Bitácora</h4>
+                  <div class="form-row align-items-end mb-2">
+                    <div class="form-group col-md-5 mb-0">
+                      <label class="small mb-1">Código</label>
+                      <input type="text" class="form-control form-control-sm" id="filtroCodigo" placeholder="Todos">
+                    </div>
+                    <div class="form-group col-md-4 mb-0">
+                      <label class="small mb-1">Tipo</label>
+                      <select class="form-control form-control-sm" id="filtroTipo">
+                        <option value="">Todos los tipos</option>
+                        <option value="Entrada">Entrada</option>
+                        <option value="Salida">Salida</option>
+                        <option value="Merma">Merma</option>
+                        <option value="Ajuste (+)">Ajuste (+)</option>
+                        <option value="Ajuste (-)">Ajuste (-)</option>
+                      </select>
+                    </div>
+                    <div class="form-group col-md-3 mb-0">
+                      <button type="button" class="btn btn-sm btn-outline-primary btn-block" id="btnBuscarBitacora">Buscar</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Folio</th>
+                          <th>Fecha</th>
+                          <th>Tipo</th>
+                          <th>Código</th>
+                          <th>Lote</th>
+                          <th class="text-right">Cantidad</th>
+                          <th>Área/servicio</th>
+                          <th>Responsable</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaMovimientos">
+                        <tr><td colspan="8">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="small text-muted" id="bitacoraResumen"></span>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="bitacoraAnterior">Anterior</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="bitacoraSiguiente">Siguiente</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-movimientos.js?v=1"></script>
+</body>
+</html>

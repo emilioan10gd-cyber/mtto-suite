@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Dashboard</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Dashboard — Farmacia</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Medicamentos activos</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiTotal">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Piezas vigentes</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiVigentes">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Bajo mínimo</h4>
+                  <h2 class="font-weight-bold text-danger mb-0" id="kpiBajoMinimo">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Por caducar (90 días)</h4>
+                  <h2 class="font-weight-bold text-warning mb-0" id="kpiPorCaducar">—</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráficas -->
+          <div class="row">
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Existencias por categoría</h4>
+                  <canvas id="graficaValorCategoria" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Distribución por nivel de existencias</h4>
+                  <canvas id="graficaPorNivel" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                    <h4 class="card-title mb-0">Movimientos de inventario — últimos 12 meses</h4>
+                    <div class="form-inline">
+                      <label class="mr-2 mb-0 small text-muted" for="selectorMes">Analizar mes:</label>
+                      <select class="form-control form-control-sm" id="selectorMes"></select>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap mb-3" style="gap: 28px;" id="detalleMes">
+                    <div>
+                      <span class="text-muted small d-block">Entradas</span>
+                      <span class="h5 text-success" id="mesEntradas">—</span>
+                      <span class="small text-muted" id="mesUnidadesEntrada"></span>
+                    </div>
+                    <div>
+                      <span class="text-muted small d-block">Salidas</span>
+                      <span class="h5 text-danger" id="mesSalidas">—</span>
+                      <span class="small text-muted" id="mesUnidadesSalida"></span>
+                    </div>
+                    <div>
+                      <span class="text-muted small d-block">Total de movimientos</span>
+                      <span class="h5" id="mesTotal">—</span>
+                    </div>
+                  </div>
+                  <canvas id="graficaMovimientosMes" height="100"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Por categoría -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Existencias por categoría</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Categoría</th>
+                          <th>Medicamentos</th>
+                          <th>Existencias</th>
+                          <th>Bajo mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaCategorias">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bajo stock -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Medicamentos con menor existencia</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Medicamento</th>
+                          <th>Actual</th>
+                          <th>Mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaBajoStock">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-dashboard.js?v=1"></script>
+</body>
+</html>

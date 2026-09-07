@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Colectivos</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Colectivos — Cliente interno</h3>
+              <p class="text-muted mb-0">
+                Dotación periódica de medicamento a un servicio completo (no a un paciente).
+                Cada colectivo queda con doble registro: quién entrega en farmacia y quién
+                recibe en el área. Si una clave no alcanza, se rechaza el colectivo completo.
+              </p>
+              <p id="estadoCarga"></p>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <!-- Cuadro autorizado por servicio -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Cuadro autorizado por servicio</h4>
+                  <div class="alert alert-danger d-none" id="errorClave"></div>
+                  <div class="alert alert-success d-none" id="exitoClave"></div>
+                  <div class="form-group">
+                    <label class="small mb-1">Servicio</label>
+                    <select class="form-control form-control-sm" id="cuadroServicio"></select>
+                  </div>
+                  <div class="table-responsive mb-3">
+                    <table class="table table-sm">
+                      <thead><tr><th>Código</th><th>Medicamento</th><th class="text-right">Cant./periodo</th><th>Periodo</th></tr></thead>
+                      <tbody id="tablaCuadroServicio"><tr><td colspan="4">Selecciona un servicio</td></tr></tbody>
+                    </table>
+                  </div>
+
+                  <h6 class="mb-2">Autorizar / actualizar clave</h6>
+                  <form id="formClave">
+                    <div class="form-row align-items-end">
+                      <div class="form-group col-md-5 mb-2">
+                        <label class="small mb-1">Código</label>
+                        <input type="text" class="form-control form-control-sm" id="claveCodigo"
+                               list="listaCodigosColectivo" autocomplete="off">
+                        <datalist id="listaCodigosColectivo"></datalist>
+                      </div>
+                      <div class="form-group col-md-3 mb-2">
+                        <label class="small mb-1">Cant./periodo</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="claveCantidad">
+                      </div>
+                      <div class="form-group col-md-3 mb-2">
+                        <label class="small mb-1">Periodo</label>
+                        <select class="form-control form-control-sm" id="clavePeriodo">
+                          <option>Semanal</option>
+                          <option>Quincenal</option>
+                          <option>Mensual</option>
+                        </select>
+                      </div>
+                      <div class="form-group col-md-1 mb-2">
+                        <button type="submit" class="btn btn-sm btn-outline-primary btn-block">+</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Entregar colectivo -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Entregar colectivo</h4>
+                  <div class="alert alert-danger d-none" id="errorColectivo"></div>
+                  <div class="alert alert-success d-none" id="exitoColectivo"></div>
+                  <form id="formColectivo">
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">Servicio *</label>
+                        <select class="form-control form-control-sm" id="colectivoServicio" required></select>
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">Fecha</label>
+                        <input type="date" class="form-control form-control-sm" id="colectivoFecha">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">Entrega (farmacia) *</label>
+                        <input type="text" class="form-control form-control-sm" id="colectivoEntregaPor" required maxlength="120">
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label class="small mb-1">Recibe (enfermera responsable) *</label>
+                        <input type="text" class="form-control form-control-sm" id="colectivoRecibePor" required maxlength="120">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="small mb-1">Observaciones</label>
+                      <input type="text" class="form-control form-control-sm" id="colectivoObservaciones" maxlength="500">
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-2">Detalle: claves entregadas</h6>
+                    <div class="form-row align-items-end">
+                      <div class="form-group col-md-6 mb-2">
+                        <label class="small mb-1">Código</label>
+                        <input type="text" class="form-control form-control-sm" id="detalleCodigo"
+                               list="listaCodigosColectivo" autocomplete="off">
+                      </div>
+                      <div class="form-group col-md-4 mb-2">
+                        <label class="small mb-1">Cantidad</label>
+                        <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="detalleCantidad">
+                      </div>
+                      <div class="form-group col-md-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-block" id="btnAgregarDetalle">+</button>
+                      </div>
+                    </div>
+                    <div class="table-responsive mb-2" id="wrapDetalleColectivo" style="display:none;">
+                      <table class="table table-sm">
+                        <thead><tr><th>Código</th><th class="text-right">Cantidad</th><th></th></tr></thead>
+                        <tbody id="tablaDetalleColectivo"></tbody>
+                      </table>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Registrar colectivo</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historial -->
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="card-title mb-0">Colectivos entregados</h4>
+                    <div class="form-inline">
+                      <select class="form-control form-control-sm mr-2" id="filtroServicioHistorial">
+                        <option value="">Todos los servicios</option>
+                      </select>
+                      <button type="button" class="btn btn-sm btn-outline-primary" id="btnBuscarHistorial">Buscar</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Folio</th><th>Fecha</th><th>Servicio</th><th>Entrega</th><th>Recibe</th>
+                          <th class="text-right">Líneas</th><th class="text-right">Total entregado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaHistorial">
+                        <tr><td colspan="7">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-colectivos.js?v=1"></script>
+</body>
+</html>

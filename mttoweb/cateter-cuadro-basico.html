@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Clínica de Catéter · Cuadro básico</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+  <style>
+    /* Buscador tipo "moderno": caja grande, resultados que aparecen abajo
+       como una lista de tarjetas, sin recargar la página. */
+    #cajaBusqueda {
+      font-size: 1.15rem;
+      padding: 0.85rem 1rem 0.85rem 2.75rem;
+      border-radius: 10px;
+    }
+    .buscador-wrapper { position: relative; }
+    .buscador-wrapper .typcn-zoom {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      font-size: 1.3rem; color: #9aa1ac; pointer-events: none;
+    }
+    .resultado-cpm {
+      border: 1px solid #eceff3; border-radius: 10px; padding: 0.9rem 1.1rem;
+      margin-bottom: 0.6rem; transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .resultado-cpm:hover { box-shadow: 0 2px 10px rgba(0,0,0,.06); border-color: #d7dde5; }
+    .resultado-cpm mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
+    .resultado-cpm .clave-cpm { font-family: monospace; font-size: .95rem; color: #6c757d; }
+    #estadoBusqueda { min-height: 1.4rem; }
+    .spinner-inline {
+      display: inline-block; width: 1rem; height: 1rem; border-radius: 50%;
+      border: 2px solid #d7dde5; border-top-color: #6c757d;
+      animation: girar .6s linear infinite; vertical-align: -2px;
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Cuadro básico</h3>
+              <p class="text-muted">
+                Busca cualquier clave del cuadro básico de IMSS-Bienestar y agrégala al catálogo
+                de la Clínica de Catéter. Solo aparece aquí lo que tú decidas usar.
+              </p>
+            </div>
+          </div>
+
+          <div class="row mt-2">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body">
+                  <div class="buscador-wrapper">
+                    <i class="typcn typcn-zoom"></i>
+                    <input type="text" class="form-control" id="cajaBusqueda" autocomplete="off"
+                           placeholder="Escribe una clave o una palabra de la descripción (ej. &quot;doble lumen&quot;, &quot;hemodiálisis&quot;, 060.172)…">
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" id="filtroSoloCateteres" checked>
+                      <label class="form-check-label small text-muted" for="filtroSoloCateteres">
+                        Solo material relacionado con catéteres
+                      </label>
+                    </div>
+                    <span id="estadoBusqueda" class="small text-muted"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-1">
+            <div class="col-12">
+              <div id="resultadosBusqueda"></div>
+              <div class="d-flex justify-content-center mt-2 mb-4" id="cargarMasWrapper" style="display:none !important;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCargarMas">Cargar más resultados</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- ============================== Modal: agregar al catálogo ============================== -->
+  <div class="modal fade" id="modalAgregar" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form id="formAgregar">
+          <div class="modal-header">
+            <h5 class="modal-title">Agregar al catálogo de la clínica</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger d-none" id="errorAgregar"></div>
+            <p class="mb-1"><span class="text-muted small">Clave</span><br><span id="agregarClave" class="font-weight-bold"></span></p>
+            <p class="small text-muted" id="agregarDescripcion" style="max-height: 110px; overflow-y: auto;"></p>
+            <div class="form-group">
+              <label>Nombre corto (opcional — si se deja vacío, se deriva de la descripción)</label>
+              <input type="text" class="form-control" id="agregarNombre" maxlength="250">
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-8">
+                <label>Categoría</label>
+                <select class="form-control" id="agregarCategoria"></select>
+              </div>
+              <div class="form-group col-md-4">
+                <label>Stock mínimo</label>
+                <input type="number" step="0.001" min="0" class="form-control" id="agregarStockMinimo" value="0">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Agregar al catálogo</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("cateter");</script>
+  <script src="js/cateter-api.js?v=17"></script>
+  <script src="js/cateter-cuadro-basico.js?v=13"></script>
+</body>
+</html>

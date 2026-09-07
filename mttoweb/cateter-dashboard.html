@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Clínica de Catéter · Dashboard</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0 font-weight-bold">Dashboard — Clínica de Catéter</h3>
+              <p id="estadoCarga">Cargando datos...</p>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Claves activas</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiClaves">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Piezas en almacén</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiAlmacen">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Piezas en stock</h4>
+                  <h2 class="font-weight-bold mb-0" id="kpiStock">—</h2>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-2">Por caducar (90 días)</h4>
+                  <h2 class="font-weight-bold text-warning mb-0" id="kpiPorCaducar">—</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráficas: mismas 3 del Dashboard de mtto -->
+          <div class="row">
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Valor de inventario por categoría</h4>
+                  <canvas id="graficaValorCategoria" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Distribución por nivel de existencias</h4>
+                  <canvas id="graficaPorNivel" height="220"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                    <h4 class="card-title mb-0">Movimientos de inventario — últimos 12 meses</h4>
+                    <div class="form-inline">
+                      <label class="mr-2 mb-0 small text-muted" for="selectorMes">Analizar mes:</label>
+                      <select class="form-control form-control-sm" id="selectorMes"></select>
+                    </div>
+                  </div>
+
+                  <!-- Detalle del mes elegido. La gráfica sigue mostrando los 12
+                       meses para no perder la tendencia; esto resume el mes que
+                       se está analizando y lo resalta con un punto más grande. -->
+                  <div class="d-flex flex-wrap mb-3" style="gap: 28px;" id="detalleMes">
+                    <div>
+                      <span class="text-muted small d-block">Entradas</span>
+                      <span class="h5 text-success" id="mesEntradas">—</span>
+                      <span class="small text-muted" id="mesUnidadesEntrada"></span>
+                    </div>
+                    <div>
+                      <span class="text-muted small d-block">Salidas</span>
+                      <span class="h5 text-danger" id="mesSalidas">—</span>
+                      <span class="small text-muted" id="mesUnidadesSalida"></span>
+                    </div>
+                    <div>
+                      <span class="text-muted small d-block">Total de movimientos</span>
+                      <span class="h5" id="mesTotal">—</span>
+                    </div>
+                  </div>
+                  <canvas id="graficaMovimientosMes" height="100"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Por categoría -->
+            <div class="col-lg-7 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Existencias por categoría</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Categoría</th>
+                          <th>Claves</th>
+                          <th>Existencias</th>
+                          <th>Bajo mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaCategorias">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bajo stock -->
+            <div class="col-lg-5 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title mb-3">Claves con menor existencia</h4>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Clave</th>
+                          <th>Catéter</th>
+                          <th>Actual</th>
+                          <th>Mínimo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaBajoStock">
+                        <tr><td colspan="4">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="vendors/chart.js/Chart.min.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("cateter");</script>
+  <script src="js/cateter-api.js?v=17"></script>
+  <script>
+    async function cargarDashboard() {
+      const formateaNumero = (n) => new Intl.NumberFormat("es-MX").format(n || 0);
+      const PALETA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"];
+      const GRIS_EJE = "#e1e0d9";
+      const TINTA_MUTED = "#898781";
+      const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+      function escapa(texto) {
+        const div = document.createElement("div");
+        div.textContent = texto ?? "";
+        return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+
+      const COLOR_NIVEL = {
+        "Sin stock": "#3d4351", "Bajo minimo": "#d64545",
+        "Normal": "#1baf7a", "Sobre maximo": "#eda100"
+      };
+      const ETIQUETA_NIVEL = {
+        "Sin stock": "Sin stock", "Bajo minimo": "Bajo mínimo",
+        "Normal": "Normal", "Sobre maximo": "Sobre máximo"
+      };
+
+      const estado = document.getElementById("estadoCarga");
+      try {
+        const datos = await window.CateterApi.dashboard.todo({ topBajoStock: 10, mesesHistorial: 12 });
+
+        document.getElementById("kpiClaves").textContent = formateaNumero(datos.kpis.totalClaves);
+        document.getElementById("kpiAlmacen").textContent = formateaNumero(datos.kpis.piezasEnAlmacen);
+        document.getElementById("kpiStock").textContent = formateaNumero(datos.kpis.piezasEnStock);
+        document.getElementById("kpiPorCaducar").textContent = formateaNumero(datos.kpis.piezasPorVencer90);
+
+        new Chart(document.getElementById("graficaValorCategoria"), {
+          type: "bar", data: {
+            labels: datos.porCategoria.map(c => c.categoria),
+            datasets: [{ label: "Total de piezas", data: datos.porCategoria.map(c => c.totalExistencias), backgroundColor: PALETA[0], maxBarThickness: 28 }]
+          },
+          options: {
+            legend: { display: false },
+            scales: {
+              xAxes: [{ gridLines: { display: false }, ticks: { autoSkip: false, maxRotation: 60, minRotation: 40, fontColor: TINTA_MUTED } }],
+              yAxes: [{ gridLines: { color: GRIS_EJE }, ticks: { beginAtZero: true, fontColor: TINTA_MUTED } }]
+            }
+          }
+        });
+
+        const conDatos = datos.porNivel.filter(n => n.totalClaves > 0);
+        const total = conDatos.reduce((s, n) => s + n.totalClaves, 0);
+        new Chart(document.getElementById("graficaPorNivel"), {
+          type: "pie", data: {
+            labels: conDatos.map(n => ETIQUETA_NIVEL[n.nivel] || n.nivel),
+            datasets: [{ data: conDatos.map(n => n.totalClaves), backgroundColor: conDatos.map(n => COLOR_NIVEL[n.nivel] || PALETA[0]) }]
+          },
+          options: {
+            legend: { position: "bottom", labels: { fontColor: TINTA_MUTED } },
+            tooltips: {
+              callbacks: {
+                label: (item, data) => {
+                  const etiqueta = data.labels[item.index];
+                  const valor = data.datasets[0].data[item.index];
+                  const pct = total ? Math.round(valor * 1000 / total) / 10 : 0;
+                  return `${etiqueta}: ${formateaNumero(valor)} clave(s) (${pct}%)`;
+                }
+              }
+            }
+          }
+        });
+
+        new Chart(document.getElementById("graficaMovimientosMes"), {
+          type: "line", data: {
+            labels: datos.porMes.map(m => `${MESES[m.mes - 1]} ${m.anio}`),
+            datasets: [
+              { label: "Entradas", data: datos.porMes.map(m => m.unidadesEntrada), borderColor: PALETA[0], backgroundColor: "transparent", borderWidth: 2, pointRadius: 3, pointBackgroundColor: PALETA[0] },
+              { label: "Salidas", data: datos.porMes.map(m => m.unidadesSalida), borderColor: PALETA[1], backgroundColor: "transparent", borderWidth: 2, pointRadius: 3, pointBackgroundColor: PALETA[1] }
+            ]
+          },
+          options: {
+            legend: { position: "bottom", labels: { fontColor: TINTA_MUTED } },
+            scales: {
+              xAxes: [{ gridLines: { display: false }, ticks: { fontColor: TINTA_MUTED } }],
+              yAxes: [{ gridLines: { color: GRIS_EJE }, ticks: { beginAtZero: true, precision: 0, fontColor: TINTA_MUTED } }]
+            }
+          }
+        });
+
+        document.getElementById("tablaCategorias").innerHTML = datos.porCategoria.map(c => `
+          <tr>
+            <td>${escapa(c.categoria)}</td>
+            <td>${formateaNumero(c.totalArticulos)}</td>
+            <td>${formateaNumero(c.totalExistencias)}</td>
+            <td>${c.bajoMinimo > 0 ? `<span class="text-danger font-weight-bold">${c.bajoMinimo}</span>` : "0"}</td>
+          </tr>`).join("") || `<tr><td colspan="4">Sin datos</td></tr>`;
+
+        document.getElementById("tablaBajoStock").innerHTML = datos.bajoStock.map(a => `
+          <tr>
+            <td class="text-nowrap"><span style="font-family:monospace">${escapa(a.clave)}</span></td>
+            <td>${escapa(a.nombre)}</td>
+            <td class="text-danger font-weight-bold">${formateaNumero(a.total)}</td>
+            <td>${formateaNumero(a.stockMinimo)}</td>
+          </tr>`).join("") || `<tr><td colspan="4">Sin claves bajo mínimo</td></tr>`;
+
+        estado.textContent = "";
+      } catch (err) {
+        estado.textContent = "No se pudo conectar con la API (" + err.message + "). ¿Está corriendo mtto en " + window.MTTO_CONFIG.API_BASE_URL + "?";
+        estado.classList.add("text-danger");
+      }
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", cargarDashboard);
+    } else {
+      setTimeout(cargarDashboard, 100);
+    }
+  </script>
+</body>
+</html>

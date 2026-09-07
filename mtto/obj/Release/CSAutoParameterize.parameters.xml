@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="Model1-Web.config Connection String" description="Model1 Cadena de conexión que usa la aplicación en web.config para obtener acceso a la base de datos." defaultValue="data source=SERVIDOR_DEL_HOSTING;initial catalog=NOMBRE_BD_DEL_HOSTING;user id=USUARIO;password=CONTRASENA;trustservercertificate=True;MultipleActiveResultSets=True;App=EntityFramework" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="C:\\Users\\trici\\source\\repos\\mtto\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='Model1']/@connectionString" />
+  </parameter>
+</parameters>

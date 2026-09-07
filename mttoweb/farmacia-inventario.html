@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Farmacia · Inventario</title>
+  <link rel="stylesheet" href="vendors/typicons.font/font/typicons.css">
+  <link rel="stylesheet" href="vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="css/vertical-layout-light/style.css">
+  <link rel="stylesheet" href="css/mtto-custom.css?v=14">
+  <link rel="shortcut icon" href="images/favicon.png" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- ============================== Navbar ============================== -->
+    <div id="navbarInyectado"></div>
+    <!-- ============================== /Navbar ============================== -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- ============================== Sidebar ============================== -->
+      <div id="sidebarInyectado"></div>
+      <!-- ============================== /Sidebar ============================== -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <h3 class="mb-0 font-weight-bold">Inventario — Farmacia</h3>
+                <p id="estadoCarga">Cargando datos...</p>
+              </div>
+              <div>
+                <button type="button" class="btn btn-outline-secondary" id="btnExportar">
+                  <i class="typcn typcn-download mr-1"></i>Exportar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNuevoMedicamento">
+                  <i class="typcn typcn-plus mr-1"></i>Nuevo medicamento
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPIs -->
+          <div class="row mt-3" id="kpiRow">
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Medicamentos activos</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiTotal">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Piezas vigentes</h4>
+                <h2 class="font-weight-bold mb-0" id="kpiVigentes">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Bajo mínimo</h4>
+                <h2 class="font-weight-bold text-danger mb-0" id="kpiBajoMinimo">—</h2>
+              </div></div>
+            </div>
+            <div class="col-md-3 grid-margin stretch-card">
+              <div class="card"><div class="card-body">
+                <h4 class="card-title mb-2">Por caducar (90 días)</h4>
+                <h2 class="font-weight-bold text-warning mb-0" id="kpiPorCaducar">—</h2>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="row mt-1">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body py-3">
+                  <form class="form-inline" id="formFiltros">
+                    <input type="text" class="form-control mr-2 mb-2" id="filtroTexto"
+                           placeholder="Buscar por código, nombre o descripción" style="min-width: 280px;">
+                    <select class="form-control mr-2 mb-2" id="filtroCategoria">
+                      <option value="">Todas las categorías</option>
+                    </select>
+                    <select class="form-control mr-2 mb-2" id="filtroNivel">
+                      <option value="">Todos los niveles</option>
+                      <option value="Sin stock">Sin stock</option>
+                      <option value="Bajo minimo">Bajo mínimo</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Sobre maximo">Sobre máximo</option>
+                    </select>
+                    <select class="form-control mr-2 mb-2" id="filtroAlerta">
+                      <option value="">Cualquier caducidad</option>
+                      <option value="Con caducados">Con caducados</option>
+                      <option value="Critico">Crítico (≤30 días)</option>
+                      <option value="Por vencer">Por vencer (≤90 días)</option>
+                      <option value="Vigente">Vigente</option>
+                      <option value="Sin fecha">Sin fecha</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary mb-2">Filtrar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Medicamento</th>
+                          <th>Categoría</th>
+                          <th class="text-right">Existencia</th>
+                          <th>Nivel</th>
+                          <th>Caducidad</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="tablaInventario">
+                        <tr><td colspan="7">Cargando...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span id="resumenPagina" class="text-muted small"></span>
+                    <div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagAnterior">Anterior</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPagSiguiente">Siguiente</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-center text-sm-left d-block d-sm-inline-block">Mantenimiento — Panel interno</span>
+          </div>
+        </footer>
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+
+  <!-- ============================== Modal: nuevo medicamento ============================== -->
+  <div class="modal fade" id="modalNuevoMedicamento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo medicamento</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <form id="formNuevoMedicamento">
+            <div class="form-row">
+              <div class="form-group col-md-5">
+                <label class="small mb-1">Código *</label>
+                <input type="text" class="form-control form-control-sm" id="nuevoCodigo" required maxlength="40">
+              </div>
+              <div class="form-group col-md-7">
+                <label class="small mb-1">Nombre *</label>
+                <input type="text" class="form-control form-control-sm" id="nuevoNombre" required maxlength="250">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label class="small mb-1">Categoría</label>
+                <select class="form-control form-control-sm" id="nuevoCategoria"></select>
+              </div>
+              <div class="form-group col-md-6">
+                <label class="small mb-1">Presentación</label>
+                <input type="text" class="form-control form-control-sm" id="nuevoPresentacion" maxlength="150">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label class="small mb-1">Stock mínimo</label>
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm" id="nuevoStockMinimo" value="0">
+              </div>
+              <div class="form-group col-md-6">
+                <label class="small mb-1">Stock máximo</label>
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm" id="nuevoStockMaximo">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
+          </form>
+          <div id="alertaNuevoMedicamento" class="alert alert-sm mt-2 d-none" role="alert"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== Modal: detalle de lotes / caducidad ============================== -->
+  <div class="modal fade" id="modalLotes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Lotes y caducidad — <span id="lotesCodigo"></span></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="mb-3" id="lotesNombre"></h6>
+
+          <div class="table-responsive mb-4">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Lote</th>
+                  <th>Caducidad</th>
+                  <th>Estado</th>
+                  <th class="text-right">Existencia</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody id="tablaLotes">
+                <tr><td colspan="5">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="nav nav-tabs" id="tabsLote" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#tabMovimientos" role="tab">
+                <i class="typcn typcn-arrow-repeat"></i> Movimientos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#tabRegistrarLote" role="tab">
+                <i class="typcn typcn-plus"></i> Registrar lote
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#tabHistorial" role="tab">
+                <i class="typcn typcn-time"></i> Movimientos recientes
+              </a>
+            </li>
+          </ul>
+          <div class="tab-content border border-top-0 rounded-bottom p-3 mb-2">
+            <!-- ------------------------------------------------ Movimientos -->
+            <div class="tab-pane fade show active" id="tabMovimientos" role="tabpanel">
+              <p class="small text-muted">
+                Se descuenta primero del lote que caduca antes (FEFO). No hace falta elegir el lote;
+                para dar de baja material caducado, usa Merma: es la única forma de sacarlo del
+                inventario sin marcarlo como despachado a un paciente.
+              </p>
+              <form id="formSurtir">
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Tipo</label>
+                    <select class="form-control form-control-sm" id="surtirTipo">
+                      <option value="Salida">Salida (despacho a paciente/área)</option>
+                      <option value="Merma">Merma (caducado / dañado)</option>
+                      <option value="Ajuste (-)">Ajuste (-)</option>
+                    </select>
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Cantidad</label>
+                    <input type="number" step="0.001" min="0.001" class="form-control form-control-sm" id="surtirCantidad" required>
+                  </div>
+                </div>
+                <div class="form-row" id="grupoDatosPaciente">
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Paciente</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirPaciente" maxlength="150">
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Expediente</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirExpediente" maxlength="40">
+                  </div>
+                </div>
+                <div class="form-row" id="grupoDatosClinicos">
+                  <div class="form-group col-md-4">
+                    <label class="small mb-1">Diagnóstico</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirDiagnostico" maxlength="255">
+                  </div>
+                  <div class="form-group col-md-3">
+                    <label class="small mb-1">CIE</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirCie" maxlength="20">
+                  </div>
+                  <div class="form-group col-md-5">
+                    <label class="small mb-1">Área / servicio</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirAreaServicio" maxlength="120"
+                           placeholder="Ej. Urgencias, Hospitalización...">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Responsable</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirResponsable" placeholder="Opcional">
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Observaciones</label>
+                    <input type="text" class="form-control form-control-sm" id="surtirObservaciones" maxlength="500">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Registrar</button>
+              </form>
+              <div id="alertaSurtir" class="alert alert-sm mt-2 d-none" role="alert"></div>
+            </div>
+
+            <!-- ------------------------------------------------- Registrar lote -->
+            <div class="tab-pane fade" id="tabRegistrarLote" role="tabpanel">
+              <p class="small text-muted">Da de alta un lote nuevo (o localiza uno existente) y, si ya tienes
+                la cantidad recibida, registra su entrada en el mismo paso.</p>
+              <form id="formNuevoLote">
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Número de lote *</label>
+                    <input type="text" class="form-control form-control-sm" id="loteNumero" required maxlength="60">
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Caducidad</label>
+                    <input type="date" class="form-control form-control-sm" id="loteCaducidad">
+                  </div>
+                </div>
+                <div class="form-row align-items-end">
+                  <div class="form-group col-md-6">
+                    <label class="small mb-1">Cantidad inicial</label>
+                    <input type="number" step="0.001" min="0" class="form-control form-control-sm" id="loteCantidad" value="0">
+                  </div>
+                  <div class="form-group col-md-6">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Dar de alta</button>
+                  </div>
+                </div>
+              </form>
+              <div id="alertaLote" class="alert alert-sm mt-2 d-none" role="alert"></div>
+            </div>
+
+            <!-- ------------------------------------------ Movimientos recientes -->
+            <div class="tab-pane fade" id="tabHistorial" role="tabpanel">
+              <div class="form-row align-items-end mb-2">
+                <div class="form-group col-md-6 mb-0">
+                  <label class="small mb-1">Tipo de movimiento</label>
+                  <select class="form-control form-control-sm" id="histTipo">
+                    <option value="">Todos los tipos</option>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Salida">Salida</option>
+                    <option value="Merma">Merma</option>
+                    <option value="Ajuste (+)">Ajuste (+)</option>
+                    <option value="Ajuste (-)">Ajuste (-)</option>
+                  </select>
+                </div>
+                <div class="form-group col-md-3 mb-0">
+                  <button type="button" class="btn btn-sm btn-outline-primary btn-block" id="btnHistBuscar">Buscar</button>
+                </div>
+              </div>
+              <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Folio</th><th>Fecha</th><th>Tipo</th><th>Lote</th>
+                      <th class="text-right">Cantidad</th><th>Área/servicio</th><th>Responsable</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaMovimientosLote">
+                    <tr><td colspan="7">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="small text-muted" id="histResumen"></span>
+                <div>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" id="histAnterior">Anterior</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" id="histSiguiente">Siguiente</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendors/js/vendor.bundle.base.js"></script>
+  <script src="js/off-canvas.js"></script>
+  <script src="js/hoverable-collapse.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/mtto-config.js?v=14"></script>
+  <script src="js/layout.js?v=2"></script>
+  <script>Layout.inyectar();</script>
+
+  <script src="js/auth.js?v=14"></script>
+  <script>Auth.exigirSesion("farmacia");</script>
+  <script src="js/farmacia-api.js?v=1"></script>
+  <script src="js/farmacia-inventario.js?v=1"></script>
+</body>
+</html>
